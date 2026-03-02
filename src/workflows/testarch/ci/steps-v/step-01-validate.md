@@ -52,11 +52,17 @@ Evaluate outputs against each checklist item.
 
 ### 2a. Script Injection Scan
 
-Scan all generated YAML workflow files for the vulnerable pattern: `${{ inputs.*` or other user-controlled GitHub context expressions (`${{ github.event.pull_request.title`, `${{ github.event.issue.body`, `${{ github.event.comment.body`, `${{ github.head_ref`) appearing directly inside `run:` blocks.
+Scan all generated YAML workflow files for unsafe interpolation patterns inside `run:` blocks.
 
-**Detection method:** For each `run:` block in generated YAML, check if any `${{ inputs.*` or unsafe context expression appears in the run script body. If found, flag as **FAIL** with the specific line and recommend converting to the safe `env:` intermediary pattern.
+**Unsafe patterns to flag (FAIL):**
 
-**Safe patterns to ignore:** `${{ steps.*.outputs.* }}`, `${{ matrix.* }}`, `${{ runner.os }}`, `${{ github.sha }}`, `${{ github.ref }}`, `${{ secrets.* }}`, `${{ env.* }}` — these are system-controlled and safe to use directly in `run:` blocks.
+- `${{ inputs.* }}` — all workflow inputs are user-controllable
+- `${{ github.event.* }}` — treat the entire event namespace as unsafe by default (includes PR titles, issue bodies, comment bodies, label names, etc.)
+- `${{ github.head_ref }}` — PR source branch name (user-controlled)
+
+**Detection method:** For each `run:` block in generated YAML, check if any of the above expressions appears in the run script body. If found, flag as **FAIL** with the exact line and recommend converting to the safe `env:` intermediary pattern (pass through `env:`, reference as double-quoted `"$ENV_VAR"`).
+
+**Safe patterns to ignore** (exempt from flagging): `${{ steps.*.outputs.* }}`, `${{ matrix.* }}`, `${{ runner.os }}`, `${{ github.sha }}`, `${{ github.ref }}`, `${{ secrets.* }}`, `${{ env.* }}` — these are safe from GitHub expression injection when used in `run:` blocks.
 
 ### 3. Write Report
 

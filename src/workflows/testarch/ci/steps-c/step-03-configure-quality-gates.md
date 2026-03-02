@@ -50,22 +50,24 @@ Use `{knowledgeIndex}` to load `ci-burn-in.md` guidance:
 
 **Security: Script injection prevention for reusable burn-in workflows:**
 
-When burn-in is extracted into a reusable workflow (`on: workflow_call`) with inputs like `base-ref`, `install-command`, `test-command`, or `burn-in-count`, all `${{ inputs.* }}` values MUST be passed through `env:` intermediaries in `run:` blocks. Never interpolate them directly.
+When burn-in is extracted into a reusable workflow (`on: workflow_call`), all `${{ inputs.* }}` values MUST be passed through `env:` intermediaries and referenced as quoted `"$ENV_VAR"`. Never interpolate them directly.
+
+**Inputs must be DATA, not COMMANDS.** Do not accept command-shaped inputs (e.g., `inputs.install-command`, `inputs.test-command`) that get executed as shell code — even through `env:`, running `$CMD` is still command injection. Use fixed commands (e.g., `npm ci`, `npx playwright test`) and pass inputs only as data arguments.
 
 ```yaml
-# ✅ SAFE — reusable burn-in workflow
+# ✅ SAFE — fixed commands with data-only inputs
+- name: Install dependencies
+  run: npm ci
 - name: Run burn-in loop
   env:
-    TEST_CMD: ${{ inputs.test-command }}
+    TEST_GREP: ${{ inputs.test-grep }}
     BURN_IN_COUNT: ${{ inputs.burn-in-count }}
-    INSTALL_CMD: ${{ inputs.install-command }}
     BASE_REF: ${{ inputs.base-ref }}
   run: |
     # Security: inputs passed through env: to prevent script injection
-    $INSTALL_CMD
     for i in $(seq 1 "$BURN_IN_COUNT"); do
       echo "Burn-in iteration $i/$BURN_IN_COUNT"
-      $TEST_CMD || exit 1
+      npx playwright test --grep "$TEST_GREP" || exit 1
     done
 ```
 

@@ -33,18 +33,20 @@ When CI templates are extended into reusable workflows (`on: workflow_call`), ma
 ### Unsafe Contexts (require env: intermediary)
 
 - `${{ inputs.* }}` — workflow_call and workflow_dispatch inputs
-- `${{ github.event.pull_request.title }}` — PR title (user-controlled)
-- `${{ github.event.issue.body }}` — issue body (user-controlled)
-- `${{ github.event.comment.body }}` — comment body (user-controlled)
+- `${{ github.event.* }}` — treat the entire event namespace as unsafe (PR titles, issue bodies, comment bodies, label names, etc.)
 - `${{ github.head_ref }}` — PR source branch name (user-controlled)
 
-### Safe Contexts (can use directly in run: blocks)
+**Important:** Passing through `env:` prevents GitHub expression injection, but inputs must still be treated as DATA, not COMMANDS. Never execute an input-derived env var as a shell command (e.g., `run: $CMD` where CMD came from an input). Use fixed commands and pass inputs only as quoted arguments.
+
+### Safe Contexts (safe from GitHub expression injection in run: blocks)
 
 - `${{ steps.*.outputs.* }}` — pre-computed by your own code
 - `${{ matrix.* }}` — defined in workflow YAML
 - `${{ runner.os }}`, `${{ github.sha }}`, `${{ github.ref }}` — system-controlled
 - `${{ secrets.* }}` — secret store, not user-injectable
 - `${{ env.* }}` — already an env var
+
+> **Note:** "Safe from expression injection" means these values cannot be manipulated by external actors to break out of `${{ }}` interpolation. Standard shell quoting practices still apply — always double-quote variable references in `run:` blocks.
 
 ---
 
