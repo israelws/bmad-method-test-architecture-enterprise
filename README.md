@@ -54,7 +54,7 @@ flowchart LR
 
 ### How It Works at Runtime
 
-1. **Trigger** — User types `/bmad:tea:automate` (or shorthand `TA`) in Claude/Cursor/Windsurf, or `$bmad-tea-testarch-automate` in Codex. The agent menu in `tea.agent.yaml` maps the trigger to `automate/workflow.yaml`.
+1. **Trigger** — Direct commands are `/bmad:tea:automate` (Claude/Cursor/Windsurf) and `$bmad-tea-testarch-automate` (Codex). `TA` is an agent-menu trigger available only after TEA is activated; the menu in `tea.agent.yaml` maps `TA` to `automate/workflow.yaml`.
 2. **Agent loads** — `tea.agent.yaml` injects the persona (identity, principles, critical actions) into the context window.
 3. **Workflow loads** — `workflow.yaml` resolves config variables and `workflow.md` presents the mode menu (Create / Edit / Validate), then routes to the first step file.
 4. **Step-by-step execution** — Only the current step file is in context (just-in-time loading). Each step explicitly names the next one (`nextStepFile: './step-02-...'`). The LLM reads, executes, saves output, then loads the next step. No future steps are ever preloaded.
