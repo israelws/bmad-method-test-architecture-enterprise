@@ -174,10 +174,9 @@ claude "/bmad:bmm:tea:test-design"
 
 # New
 claude "/bmad:tea:test-design"
-
-# Codex skill mode
-$bmad-tea-testarch-test-design
 ```
+
+Codex skill mode (in Codex chat): `$bmad-tea-testarch-test-design`
 
 **Example: Updating Documentation**
 
@@ -362,7 +361,7 @@ See [Configure Browser Automation](/docs/how-to/customization/configure-browser-
 
 **Solution**: Update to new namespace:
 
-```bash
+```text
 # Old (won't work)
 /bmad:bmm:tea:test-design
 

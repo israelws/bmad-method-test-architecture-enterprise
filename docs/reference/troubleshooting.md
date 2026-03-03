@@ -196,7 +196,7 @@ If the BMAD installer can run but cannot fetch the Test Architect module from Gi
 
 3. Test workflow trigger directly:
 
-   ```bash
+   ```text
    # Try full slash command
    /bmad:tea:test-design
 
