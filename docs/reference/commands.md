@@ -7,6 +7,11 @@ description: Quick reference for all 9 TEA workflows - inputs, outputs, and link
 
 Quick reference for all 9 TEA (Test Engineering Architect) workflows. For detailed step-by-step guides, see the how-to documentation.
 
+**Invocation by tool:**
+
+- Claude Code / Cursor / Windsurf: use slash commands (for example, `/bmad:tea:automate`)
+- Codex: use `$` skills from `.agents/skills` (for example, `$bmad-tea-testarch-automate`)
+
 ## Quick Index
 
 - [`teach-me-testing`](#teach-me-testing) - Learn testing (TEA Academy)

@@ -195,9 +195,13 @@ If the BMAD installer can run but cannot fetch the Test Architect module from Gi
    ```
 
 3. Test workflow trigger directly:
+
    ```bash
-   # Try full command
+   # Try full slash command
    /bmad:tea:test-design
+
+   # Codex skill-mode alternative
+   $bmad-tea-testarch-test-design
    ```
 
 ---
@@ -685,7 +689,7 @@ When reporting issues, include:
 Check these first:
 
 - [ ] TEA is installed: `ls -la _bmad/tea/`
-- [ ] Using correct command namespace: `/bmad:tea:*` not `/bmad:bmm:tea:*`
+- [ ] Using the correct invocation for your tool: slash namespace `/bmad:tea:*` (not `/bmad:bmm:tea:*`) or Codex skill equivalents (`$bmad-tea-*`)
 - [ ] Module.yaml exists and is valid
 - [ ] Knowledge base files present (40 fragments)
 - [ ] Output directory exists and is writable

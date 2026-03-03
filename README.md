@@ -54,7 +54,7 @@ flowchart LR
 
 ### How It Works at Runtime
 
-1. **Trigger** — User types `/bmad:tea:automate` (or shorthand `TA`). The agent menu in `tea.agent.yaml` maps the trigger to `automate/workflow.yaml`.
+1. **Trigger** — User types `/bmad:tea:automate` (or shorthand `TA`) in Claude/Cursor/Windsurf, or `$bmad-tea-testarch-automate` in Codex. The agent menu in `tea.agent.yaml` maps the trigger to `automate/workflow.yaml`.
 2. **Agent loads** — `tea.agent.yaml` injects the persona (identity, principles, critical actions) into the context window.
 3. **Workflow loads** — `workflow.yaml` resolves config variables and `workflow.md` presents the mode menu (Create / Edit / Validate), then routes to the first step file.
 4. **Step-by-step execution** — Only the current step file is in context (just-in-time loading). Each step explicitly names the next one (`nextStepFile: './step-02-...'`). The LLM reads, executes, saves output, then loads the next step. No future steps are ever preloaded.
@@ -103,13 +103,20 @@ npx bmad-method install
 
 **Note:** TEA is automatically added to party mode after installation. Use `/party` to collaborate with TEA alongside other BMad agents.
 
+### Tool-specific invocation
+
+| Tool                            | Invocation style                | Example                       |
+| ------------------------------- | ------------------------------- | ----------------------------- |
+| Claude Code / Cursor / Windsurf | Slash command                   | `/bmad:tea:automate`          |
+| Codex                           | `$` skill from `.agents/skills` | `$bmad-tea-testarch-automate` |
+
 ## Quickstart
 
 1. Install TEA (above)
 2. Run one of the core workflows:
-   - `TD` / `/bmad:tea:test-design` — test design and risk assessment
-   - `AT` / `/bmad:tea:atdd` — failing acceptance tests first (TDD red phase)
-   - `TA` / `/bmad:tea:automate` — expand automation coverage
+   - `TD` / `/bmad:tea:test-design` / `$bmad-tea-testarch-test-design` — test design and risk assessment
+   - `AT` / `/bmad:tea:atdd` / `$bmad-tea-testarch-atdd` — failing acceptance tests first (TDD red phase)
+   - `TA` / `/bmad:tea:automate` / `$bmad-tea-testarch-automate` — expand automation coverage
 3. Or use in party mode: `/party` to include TEA with other agents
 
 ## Engagement Models
@@ -121,17 +128,17 @@ npx bmad-method install
 
 ## Workflows
 
-| Trigger | Command                      | Purpose                                                   |
-| ------- | ---------------------------- | --------------------------------------------------------- |
-| TMT     | `/bmad:tea:teach-me-testing` | Teach Me Testing (TEA Academy)                            |
-| TF      | `/bmad:tea:framework`        | Scaffold test framework (frontend, backend, or fullstack) |
-| CI      | `/bmad:tea:ci`               | Set up CI/CD quality pipeline (multi-platform)            |
-| TD      | `/bmad:tea:test-design`      | System-level or epic-level test design                    |
-| AT      | `/bmad:tea:atdd`             | Generate failing acceptance tests + checklist             |
-| TA      | `/bmad:tea:automate`         | Expand test automation coverage                           |
-| RV      | `/bmad:tea:test-review`      | Review test quality and score                             |
-| TR      | `/bmad:tea:trace`            | Trace requirements to tests + gate decision               |
-| NR      | `/bmad:tea:nfr-assess`       | Assess non-functional requirements                        |
+| Trigger | Slash Command                | Codex Skill                      | Purpose                                                   |
+| ------- | ---------------------------- | -------------------------------- | --------------------------------------------------------- |
+| TMT     | `/bmad:tea:teach-me-testing` | `$bmad-tea-teach-me-testing`     | Teach Me Testing (TEA Academy)                            |
+| TF      | `/bmad:tea:framework`        | `$bmad-tea-testarch-framework`   | Scaffold test framework (frontend, backend, or fullstack) |
+| CI      | `/bmad:tea:ci`               | `$bmad-tea-testarch-ci`          | Set up CI/CD quality pipeline (multi-platform)            |
+| TD      | `/bmad:tea:test-design`      | `$bmad-tea-testarch-test-design` | System-level or epic-level test design                    |
+| AT      | `/bmad:tea:atdd`             | `$bmad-tea-testarch-atdd`        | Generate failing acceptance tests + checklist             |
+| TA      | `/bmad:tea:automate`         | `$bmad-tea-testarch-automate`    | Expand test automation coverage                           |
+| RV      | `/bmad:tea:test-review`      | `$bmad-tea-testarch-test-review` | Review test quality and score                             |
+| TR      | `/bmad:tea:trace`            | `$bmad-tea-testarch-trace`       | Trace requirements to tests + gate decision               |
+| NR      | `/bmad:tea:nfr-assess`       | `$bmad-tea-testarch-nfr`         | Assess non-functional requirements                        |
 
 ## Configuration
 
