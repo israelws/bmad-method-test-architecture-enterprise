@@ -712,7 +712,7 @@ export async function getUserById(
  * - Tag releases for environment tracking
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'node:child_process';
 
 const PACT_BROKER_BASE_URL = process.env.PACT_BROKER_BASE_URL!;
 const PACT_BROKER_TOKEN = process.env.PACT_BROKER_TOKEN!;
@@ -724,13 +724,21 @@ const PACTICIPANT = 'user-api-service';
 function tagRelease(version: string, environment: 'staging' | 'production') {
   console.log(`🏷️  Tagging ${PACTICIPANT} v${version} as ${environment}`);
 
-  execSync(
-    `pact-broker create-version-tag \
-      --pacticipant ${PACTICIPANT} \
-      --version ${version} \
-      --tag ${environment} \
-      --broker-base-url ${PACT_BROKER_BASE_URL} \
-      --broker-token ${PACT_BROKER_TOKEN}`,
+  execFileSync(
+    'pact-broker',
+    [
+      'create-version-tag',
+      '--pacticipant',
+      PACTICIPANT,
+      '--version',
+      version,
+      '--tag',
+      environment,
+      '--broker-base-url',
+      PACT_BROKER_BASE_URL,
+      '--broker-token',
+      PACT_BROKER_TOKEN,
+    ],
     { stdio: 'inherit' },
   );
 }
@@ -741,13 +749,21 @@ function tagRelease(version: string, environment: 'staging' | 'production') {
 function recordDeployment(version: string, environment: 'staging' | 'production') {
   console.log(`📝 Recording deployment of ${PACTICIPANT} v${version} to ${environment}`);
 
-  execSync(
-    `pact-broker record-deployment \
-      --pacticipant ${PACTICIPANT} \
-      --version ${version} \
-      --environment ${environment} \
-      --broker-base-url ${PACT_BROKER_BASE_URL} \
-      --broker-token ${PACT_BROKER_TOKEN}`,
+  execFileSync(
+    'pact-broker',
+    [
+      'record-deployment',
+      '--pacticipant',
+      PACTICIPANT,
+      '--version',
+      version,
+      '--environment',
+      environment,
+      '--broker-base-url',
+      PACT_BROKER_BASE_URL,
+      '--broker-token',
+      PACT_BROKER_TOKEN,
+    ],
     { stdio: 'inherit' },
   );
 }
@@ -759,13 +775,21 @@ function recordDeployment(version: string, environment: 'staging' | 'production'
 function cleanupOldPacts() {
   console.log(`🧹 Cleaning up old pacts for ${PACTICIPANT}`);
 
-  execSync(
-    `pact-broker clean \
-      --pacticipant ${PACTICIPANT} \
-      --broker-base-url ${PACT_BROKER_BASE_URL} \
-      --broker-token ${PACT_BROKER_TOKEN} \
-      --keep-latest-for-branch 1 \
-      --keep-min-age 30`,
+  execFileSync(
+    'pact-broker',
+    [
+      'clean',
+      '--pacticipant',
+      PACTICIPANT,
+      '--broker-base-url',
+      PACT_BROKER_BASE_URL,
+      '--broker-token',
+      PACT_BROKER_TOKEN,
+      '--keep-latest-for-branch',
+      '1',
+      '--keep-min-age',
+      '30',
+    ],
     { stdio: 'inherit' },
   );
 }
@@ -777,15 +801,25 @@ function canIDeploy(version: string, toEnvironment: string): boolean {
   console.log(`🔍 Checking if ${PACTICIPANT} v${version} can deploy to ${toEnvironment}`);
 
   try {
-    execSync(
-      `pact-broker can-i-deploy \
-        --pacticipant ${PACTICIPANT} \
-        --version ${version} \
-        --to-environment ${toEnvironment} \
-        --broker-base-url ${PACT_BROKER_BASE_URL} \
-        --broker-token ${PACT_BROKER_TOKEN} \
-        --retry-while-unknown 10 \
-        --retry-interval 30`,
+    execFileSync(
+      'pact-broker',
+      [
+        'can-i-deploy',
+        '--pacticipant',
+        PACTICIPANT,
+        '--version',
+        version,
+        '--to-environment',
+        toEnvironment,
+        '--broker-base-url',
+        PACT_BROKER_BASE_URL,
+        '--broker-token',
+        PACT_BROKER_TOKEN,
+        '--retry-while-unknown',
+        '10',
+        '--retry-interval',
+        '30',
+      ],
       { stdio: 'inherit' },
     );
     return true;

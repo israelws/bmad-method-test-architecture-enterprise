@@ -313,13 +313,10 @@ runs:
       with:
         script: |
           const prBody = context.payload.pull_request.body || '';
-          if (prBody.includes('[x] Pact breaking change')) {
-            core.exportVariable('PACT_BREAKING_CHANGE', 'true');
-            console.log('PACT_BREAKING_CHANGE set to true based on PR description checkbox.');
-          } else {
-            core.exportVariable('PACT_BREAKING_CHANGE', 'false');
-            console.log('PACT_BREAKING_CHANGE remains false.');
-          }
+          const breakingChangePattern = /\[\s*[xX]\s*\]\s*Pact breaking change/i;
+          const isBreakingChange = breakingChangePattern.test(prBody);
+          core.exportVariable('PACT_BREAKING_CHANGE', isBreakingChange ? 'true' : 'false');
+          console.log(`PACT_BREAKING_CHANGE=${isBreakingChange ? 'true' : 'false'} (from PR description checkbox).`);
 
     # Push-to-main path: resolve the merged PR and read the same checkbox.
     - name: Set PACT_BREAKING_CHANGE from merged PR (push to main)
@@ -333,12 +330,11 @@ runs:
             commit_sha: context.sha,
           });
           const merged = prs.find(pr => pr.merged_at);
-          if (merged && (merged.body || '').includes('[x] Pact breaking change')) {
-            core.exportVariable('PACT_BREAKING_CHANGE', 'true');
-            console.log('PACT_BREAKING_CHANGE set to true from merged PR.');
-          } else {
-            core.exportVariable('PACT_BREAKING_CHANGE', 'false');
-          }
+          const mergedBody = merged?.body || '';
+          const breakingChangePattern = /\[\s*[xX]\s*\]\s*Pact breaking change/i;
+          const isBreakingChange = breakingChangePattern.test(mergedBody);
+          core.exportVariable('PACT_BREAKING_CHANGE', isBreakingChange ? 'true' : 'false');
+          console.log(`PACT_BREAKING_CHANGE=${isBreakingChange ? 'true' : 'false'} (from merged PR lookup).`);
 
     - name: Export result
       id: result
@@ -353,7 +349,7 @@ runs:
 - Push-to-main path: resolves merged PR via GitHub API, reads same checkbox
 - Exports `PACT_BREAKING_CHANGE` env var for downstream steps
 - `outputs.is_breaking_change` available for consuming workflows
-- Looks for exact text `[x] Pact breaking change` in PR body
+- Uses a case-insensitive checkbox regex (`/\[\s*[xX]\s*\]\s*Pact breaking change/i`) to detect checked states robustly
 
 ---
 
@@ -521,9 +517,12 @@ export const hasMovieWithId = (id: number): ProviderStateInput => ({
 
 ```typescript
 // tests/contract/support/consumer-helpers.ts
-// TODO: Replace with import from '@seontechnologies/pactjs-utils' when available
+// TODO(temporary scaffolding): Replace local TemplateHeaders/TemplateQuery types
+// with '@seontechnologies/pactjs-utils' exports when available.
 
-import type { TemplateHeaders, TemplateQuery } from '@pact-foundation/pact/src/v3';
+type TemplateHeaders = Record<string, string | number | boolean>;
+type TemplateQueryValue = string | number | boolean | Array<string | number | boolean>;
+type TemplateQuery = Record<string, TemplateQueryValue>;
 
 export type ProviderStateInput = {
   name: string;
@@ -580,6 +579,7 @@ export const setJsonBody = (body: unknown) => setJsonContent({ body });
 - If `@seontechnologies/pactjs-utils` is not yet installed, create a local shim that mirrors the API
 - Add a TODO comment noting to swap for the published package when available
 - The shim exports `createProviderState`, `toJsonMap`, `setJsonContent`, `setJsonBody`, and helper input types
+- Keep shim types local (or sourced from public exports only); do not import from internal Pact paths like `@pact-foundation/pact/src/*`
 
 ---
 

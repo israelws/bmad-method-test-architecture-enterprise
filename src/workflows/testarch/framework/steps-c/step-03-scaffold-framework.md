@@ -136,9 +136,9 @@ Create the idiomatic test directory for the detected language:
 - **Ruby (RSpec)**: `spec/` with `spec/unit/`, `spec/integration/`, `spec/api/`, `spec/support/`
 - **Rust**: `tests/` for integration tests, inline `#[cfg(test)]` modules for unit tests
 
-**If `config.tea_use_pactjs_utils` is enabled** (and `{detected_stack}` is `backend` or `fullstack`):
+**If `config.tea_use_pactjs_utils` is enabled and runtime is Node.js/TypeScript** (i.e., `{detected_stack}` is `frontend` or `fullstack`, or `{detected_stack}` is `backend` with Node.js/TypeScript runtime):
 
-Create contract testing directory structure per `pact-consumer-framework-setup.md`:
+Create Node.js/TypeScript contract testing directory structure per `pact-consumer-framework-setup.md`:
 
 - `tests/contract/consumer/` — consumer contract test files (`.pacttest.ts` extension)
 - `tests/contract/support/` — pact config, provider state factories, consumer helpers shim
@@ -259,9 +259,9 @@ Create helpers for:
 - Auth helpers
 - Test data factories (language-idiomatic patterns)
 
-**If `config.tea_use_pactjs_utils` is enabled** (and `{detected_stack}` is `backend` or `fullstack`):
+**If `config.tea_use_pactjs_utils` is enabled and runtime is Node.js/TypeScript** (i.e., `{detected_stack}` is `frontend` or `fullstack`, or `{detected_stack}` is `backend` with Node.js/TypeScript runtime):
 
-Create contract test samples per `pact-consumer-framework-setup.md`:
+Create Node.js/TypeScript contract test samples per `pact-consumer-framework-setup.md`:
 
 - **Consumer test**: Example using PactV4 `addInteraction()` builder + `createProviderState` + real consumer code with URL injection (`.pacttest.ts` extension)
 - **Support files**: Pact config factory (`pact-config.ts`), provider state factories (`provider-states.ts`), local consumer-helpers shim (`consumer-helpers.ts`)

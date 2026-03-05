@@ -92,7 +92,7 @@ export function createTestContext(mockServerUrl: string): ApiContext {
 
 **Key Points**:
 
-- `baseUrl` MUST include the API version prefix because endpoint paths are relative (e.g., the client calls `/transactions`, not `/api/v2/transactions`)
+- `baseUrl` should include the API version prefix when consumer methods use versionless relative paths (e.g., `/transactions`) or endpoint paths are defined without the version segment
 - Single helper shared across all consumer test files — no repetition
 - Returns a plain object — follows pure-function-first pattern from `fixture-architecture.md`
 - Add fields as needed (e.g., `adminUserId`, `correlationId`) for specific test scenarios
@@ -288,7 +288,7 @@ expect(result.transactions).toBeDefined();
 2. Zero production behavior change — existing code never sets `baseUrl`
 3. Assertions validate return values from consumer methods, not HTTP status codes
 4. For parallel-endpoint facade methods, keep separate `it` blocks per endpoint
-5. `baseUrl` MUST include the API version prefix (e.g., `/api/v2`)
+5. Include the API version prefix in `baseUrl` when endpoint paths/consumer methods are versionless (for example, methods call `/transactions` instead of `/api/v2/transactions`)
 6. Create a single shared test context helper — no repetition across test files
 7. If real code reveals a contract mismatch, fix the contract — that mismatch is a bug the old tests were hiding
 
