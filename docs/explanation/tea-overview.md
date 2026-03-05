@@ -345,7 +345,7 @@ Production-ready contract testing utilities that reduce raw Pact.js boilerplate 
 - Install: `npm install -D @seontechnologies/pactjs-utils @pact-foundation/pact`
 - Config: `tea_use_pactjs_utils: true` (default is `true`)
 - Impacts: `framework`, `atdd`, `automate`, `test-design`, `test-review`, `ci`
-- Utilities include: createProviderState, toJsonMap, buildVerifierOptions, buildMessageVerifierOptions, createRequestFilter, noOpRequestFilter, handlePactBrokerUrlAndSelectors, getProviderVersionTags
+- Utilities include: createProviderState, toJsonMap, setJsonBody, setJsonContent, buildVerifierOptions, buildMessageVerifierOptions, createRequestFilter, noOpRequestFilter, handlePactBrokerUrlAndSelectors, getProviderVersionTags
 - Supports local monorepo flow (`pactUrls`) and remote broker flow (`PACT_BROKER_BASE_URL`, `PACT_BROKER_TOKEN`)
 
 ### Browser Automation (Playwright CLI + MCP)
@@ -455,7 +455,7 @@ Optional MCP integration for design-time broker interaction in contract testing 
 - [Test Quality Standards](/docs/explanation/test-quality-standards.md) - Definition of Done, determinism, isolation, explicit assertions
 - [Fixture Architecture](/docs/explanation/fixture-architecture.md) - Pure function → fixture → composition pattern
 - [Network-First Patterns](/docs/explanation/network-first-patterns.md) - Intercept-before-navigate, eliminating flakiness
-- [Knowledge Base System](/docs/explanation/knowledge-base-system.md) - Context engineering with tea-index.csv, 40 fragments
+- [Knowledge Base System](/docs/explanation/knowledge-base-system.md) - Context engineering with tea-index.csv, 42 fragments
 - [Engagement Models](/docs/explanation/engagement-models.md) - TEA Lite, TEA Solo, TEA Integrated (5 models explained)
 
 ### Philosophy & Design
@@ -470,5 +470,5 @@ Optional MCP integration for design-time broker interaction in contract testing 
 
 - [TEA Command Reference](/docs/reference/commands.md) - All 9 workflows: inputs, outputs, phases, frequency
 - [TEA Configuration Reference](/docs/reference/configuration.md) - Config options, file locations, setup examples
-- [Knowledge Base Index](/docs/reference/knowledge-base.md) - 40 fragments categorized and explained
+- [Knowledge Base Index](/docs/reference/knowledge-base.md) - 42 fragments categorized and explained
 - [Glossary - TEA Section](/docs/glossary/index.md#test-architect-tea-concepts) - 20 TEA-specific terms defined

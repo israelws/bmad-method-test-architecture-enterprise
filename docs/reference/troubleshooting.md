@@ -308,7 +308,7 @@ If the BMAD installer can run but cannot fetch the Test Architect module from Gi
 
    ```bash
    cat _bmad/tea/testarch/tea-index.csv | wc -l
-   # Should show 41 lines (header + 40 fragments)
+   # Should show 43 lines (header + 42 fragments)
    ```
 
 2. Check knowledge fragment files:
@@ -613,7 +613,7 @@ If the BMAD installer can run but cannot fetch the Test Architect module from Gi
 
 **Causes**:
 
-- Up to 40 fragments loading at once (depends on workflow and enabled integrations)
+- Up to 42 fragments loading at once (depends on workflow and enabled integrations)
 - Large fragment file sizes
 - Disk I/O bottleneck
 
@@ -691,7 +691,7 @@ Check these first:
 - [ ] TEA is installed: `ls -la _bmad/tea/`
 - [ ] Using the correct invocation for your tool: slash namespace `/bmad:tea:*` (not `/bmad:bmm:tea:*`) or Codex skill equivalents (`$bmad-tea-*`)
 - [ ] Module.yaml exists and is valid
-- [ ] Knowledge base files present (40 fragments)
+- [ ] Knowledge base files present (42 fragments)
 - [ ] Output directory exists and is writable
 - [ ] No disk space issues: `df -h`
 - [ ] Node version >=20.0.0: `node --version`
@@ -755,7 +755,7 @@ done
 
 # Check knowledge base
 fragment_count=$(ls _bmad/tea/testarch/knowledge/*.md 2>/dev/null | wc -l)
-echo "Knowledge fragments: $fragment_count (expected: 40)"
+echo "Knowledge fragments: $fragment_count (expected: 42)"
 
 # Check tea-index.csv
 csv_lines=$(wc -l < _bmad/tea/testarch/tea-index.csv 2>/dev/null || echo "0")
