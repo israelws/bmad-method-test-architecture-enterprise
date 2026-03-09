@@ -418,15 +418,15 @@ describe('Movies API Consumer Contract', () => {
       )
       .willRespondWith(
         200,
-        setJsonContent({
-          body: like({
+        setJsonBody(
+          like({
             id: integer(1),
             name: string('The Matrix'),
             year: integer(1999),
             rating: like(8.7),
             director: string('Wachowskis'),
           }),
-        }),
+        ),
       )
       .executeTest(async (mockServer: V3MockServer) => {
         // Inject mock server URL into the REAL consumer code
@@ -617,6 +617,8 @@ Before presenting the consumer CDC framework to the user, verify:
 - [ ] Consumer tests use `.pacttest.ts` extension
 - [ ] Consumer tests use PactV4 `addInteraction()` builder
 - [ ] Interaction callbacks use `setJsonContent` for query/header/body and `setJsonBody` for body-only responses
+- [ ] Request bodies use exact values (no `like()` wrapper) — Postel's Law: be strict in what you send
+- [ ] `like()`, `eachLike()`, `string()`, `integer()` matchers are only used in `willRespondWith` (responses), not in `withRequest` (requests)
 - [ ] Consumer tests call REAL consumer code (actual API client functions), NOT raw `fetch()`
 - [ ] Consumer code exposes URL injection mechanism (`setApiUrl()`, env var, or constructor param)
 - [ ] Local consumer-helpers shim present if pactjs-utils not installed

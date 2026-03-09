@@ -97,6 +97,7 @@ test.describe('[Feature] API Tests', () => {
 - ✅ Generate request filter helpers in `pact/http/helpers/` using `createRequestFilter({ tokenGenerator: () => string })`
 - ✅ Generate shared state constants in `pact/http/helpers/states.ts`
 - ✅ If async/message patterns detected, generate message consumer tests in `pact/message/` using `buildMessageVerifierOptions`
+- ⚠️ **Postel's Law for matchers**: Use `like()`, `eachLike()`, `string()`, `integer()` matchers ONLY in `willRespondWith` (responses). Request bodies in `withRequest` MUST use exact values — never wrap request bodies in `like()`. The consumer controls what it sends, so contracts should be strict about request shape.
 
 ### 3. Track Fixture Needs
 

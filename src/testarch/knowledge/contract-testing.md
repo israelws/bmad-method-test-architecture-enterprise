@@ -130,7 +130,7 @@ describe('User API Contract', () => {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          body: like(newUser),
+          body: newUser,
         })
         .willRespondWith({
           status: 201,
@@ -176,7 +176,7 @@ describe('User API Contract', () => {
 **Key Points**:
 
 - **Consumer-driven**: Frontend defines expectations, not backend
-- **Matchers**: `like`, `string`, `integer` for flexible matching
+- **Matchers (Postel's Law)**: Use `like`, `string`, `integer` matchers in `willRespondWith` (responses) for flexible matching. Do NOT use `like()` on request bodies in `withRequest` — the consumer controls what it sends, so request bodies should use exact values. This follows Postel's Law: be strict in what you send (requests), be lenient in what you accept (responses).
 - **Provider states**: given() sets up test preconditions
 - **Isolation**: No real backend needed, runs fast
 - **Pact generation**: Automatically creates JSON pact files
