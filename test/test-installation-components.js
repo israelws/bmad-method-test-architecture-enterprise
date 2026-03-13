@@ -145,34 +145,43 @@ async function runTests() {
   // ============================================================
   console.log(`${colors.yellow}Test Suite 4: Workflow Structure${colors.reset}\n`);
 
-  const teachMeWorkflowPath = path.join(projectRoot, 'src/workflows/testarch/teach-me-testing/workflow.md');
+  const teachMeWorkflowPath = path.join(projectRoot, 'src/workflows/testarch/bmad-teach-me-testing/workflow.md');
   try {
     if (await pathExists(teachMeWorkflowPath)) {
       const teachMeContent = await fs.readFile(teachMeWorkflowPath, 'utf8');
-      assert(teachMeContent.length > 0, 'teach-me-testing/workflow.md exists');
-      assert(!teachMeContent.includes('_bmad/bmm/'), 'teach-me-testing has no _bmad/bmm/ references');
+      assert(teachMeContent.length > 0, 'bmad-teach-me-testing/workflow.md exists');
+      assert(!teachMeContent.includes('_bmad/bmm/'), 'bmad-teach-me-testing has no _bmad/bmm/ references');
     } else {
-      assert(false, 'teach-me-testing workflow exists', 'src/workflows/testarch/teach-me-testing/workflow.md not found');
+      assert(false, 'teach-me-testing workflow exists', 'src/workflows/testarch/bmad-teach-me-testing/workflow.md not found');
     }
   } catch (error) {
     assert(false, 'teach-me-testing workflow validates', error.message);
   }
 
-  const workflowNames = ['framework', 'ci', 'test-design', 'atdd', 'automate', 'test-review', 'nfr-assess', 'trace'];
+  const workflowDirs = {
+    'bmad-testarch-framework': 'framework',
+    'bmad-testarch-ci': 'ci',
+    'bmad-testarch-test-design': 'test-design',
+    'bmad-testarch-atdd': 'atdd',
+    'bmad-testarch-automate': 'automate',
+    'bmad-testarch-test-review': 'test-review',
+    'bmad-testarch-nfr': 'nfr-assess',
+    'bmad-testarch-trace': 'trace',
+  };
 
-  for (const workflowName of workflowNames) {
-    const workflowYamlPath = path.join(projectRoot, `src/workflows/testarch/${workflowName}/workflow.yaml`);
+  for (const [dirName, displayName] of Object.entries(workflowDirs)) {
+    const workflowYamlPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/workflow.yaml`);
 
     if (await pathExists(workflowYamlPath)) {
       try {
         const workflowYaml = yaml.load(await fs.readFile(workflowYamlPath, 'utf8'));
-        assert(workflowYaml !== undefined, `${workflowName}/workflow.yaml is valid YAML`);
+        assert(workflowYaml !== undefined, `${dirName}/workflow.yaml is valid YAML`);
 
         // Verify no BMM references
         const yamlContent = await fs.readFile(workflowYamlPath, 'utf8');
-        assert(!yamlContent.includes('_bmad/bmm/'), `${workflowName} has no _bmad/bmm/ references`);
+        assert(!yamlContent.includes('_bmad/bmm/'), `${dirName} has no _bmad/bmm/ references`);
       } catch (error) {
-        assert(false, `${workflowName}/workflow.yaml validates`, error.message);
+        assert(false, `${dirName}/workflow.yaml validates`, error.message);
       }
     }
   }

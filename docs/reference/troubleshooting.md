@@ -191,7 +191,7 @@ If the BMAD installer can run but cannot fetch the Test Architect module from Gi
 
    ```bash
    # Check each workflow
-   cat _bmad/tea/workflows/testarch/test-design/workflow.yaml
+   cat _bmad/tea/workflows/testarch/bmad-testarch-test-design/workflow.yaml
    ```
 
 3. Test workflow trigger directly:
@@ -262,7 +262,7 @@ If the BMAD installer can run but cannot fetch the Test Architect module from Gi
 
    ```bash
    # For automate workflow
-   ls -la _bmad/tea/workflows/testarch/automate/steps-c/step-03*.md
+   ls -la _bmad/tea/workflows/testarch/bmad-testarch-automate/steps-c/step-03*.md
    # Should show: step-03a-*.md, step-03b-*.md, step-03c-aggregate.md
    ```
 
@@ -328,7 +328,7 @@ If the BMAD installer can run but cannot fetch the Test Architect module from Gi
 4. Check workflow manifest:
    ```bash
    # Each workflow.yaml should specify knowledge_fragments
-   grep -A 5 "knowledge_fragments" _bmad/tea/workflows/testarch/test-design/workflow.yaml
+   grep -A 5 "knowledge_fragments" _bmad/tea/workflows/testarch/bmad-testarch-test-design/workflow.yaml
    ```
 
 ---
@@ -715,7 +715,7 @@ Check these first:
 
 ### "Workflow 'test-design' failed at step 3"
 
-**Fix**: Check step file exists: `_bmad/tea/workflows/testarch/test-design/steps-c/step-03-*`
+**Fix**: Check step file exists: `_bmad/tea/workflows/testarch/bmad-testarch-test-design/steps-c/step-03-*`
 
 ### "Agent YAML validation failed"
 

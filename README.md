@@ -173,15 +173,15 @@ src/
 │   └── tea.agent.yaml
 ├── workflows/
 │   └── testarch/
-│       ├── atdd/
-│       ├── automate/
-│       ├── ci/
-│       ├── framework/
-│       ├── nfr-assess/
-│       ├── teach-me-testing/
-│       ├── test-design/
-│       ├── test-review/
-│       └── trace/
+│       ├── bmad-teach-me-testing/
+│       ├── bmad-testarch-atdd/
+│       ├── bmad-testarch-automate/
+│       ├── bmad-testarch-ci/
+│       ├── bmad-testarch-framework/
+│       ├── bmad-testarch-nfr/
+│       ├── bmad-testarch-test-design/
+│       ├── bmad-testarch-test-review/
+│       └── bmad-testarch-trace/
 └── testarch/
     ├── tea-index.csv
     └── knowledge/

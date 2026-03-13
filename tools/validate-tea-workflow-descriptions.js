@@ -2,7 +2,7 @@
  * Validate TEA workflow description quote style for Gemini compatibility.
  *
  * Rules for TEA workflow definitions under src/workflows/testarch/<workflow>/workflow.yaml
- * and teach-me-testing frontmatter in src/workflows/testarch/teach-me-testing/workflow.md:
+ * and teach-me-testing frontmatter in src/workflows/testarch/bmad-teach-me-testing/workflow.md:
  * - `description:` must be a single-line YAML scalar on one line
  * - the raw YAML scalar must be wrapped in single quotes
  * - parsed description text must not contain single-quote characters
@@ -84,7 +84,7 @@ async function main(customProjectRoot) {
     cwd: projectRoot,
     absolute: true,
   });
-  const mdFiles = await glob('src/workflows/testarch/teach-me-testing/workflow.md', {
+  const mdFiles = await glob('src/workflows/testarch/bmad-teach-me-testing/workflow.md', {
     cwd: projectRoot,
     absolute: true,
   });
