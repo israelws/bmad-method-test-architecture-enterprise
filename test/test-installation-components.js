@@ -87,7 +87,7 @@ async function runTests() {
   console.log(`${colors.yellow}Test Suite 2: TEA Agent Native Skill Structure${colors.reset}\n`);
 
   try {
-    const skillDir = path.join(projectRoot, 'src/agents/tea-agent-testarch');
+    const skillDir = path.join(projectRoot, 'src/agents/bmad-tea');
     const skillMdPath = path.join(skillDir, 'SKILL.md');
     const manifestPath = path.join(skillDir, 'bmad-skill-manifest.yaml');
 
@@ -95,7 +95,7 @@ async function runTests() {
     if (await pathExists(skillMdPath)) {
       const skillContent = await fs.readFile(skillMdPath, 'utf8');
 
-      assert(skillContent.includes('name: tea-agent-testarch'), 'SKILL.md has correct skill name in frontmatter');
+      assert(skillContent.includes('name: bmad-tea'), 'SKILL.md has correct skill name in frontmatter');
       assert(skillContent.includes('## Identity'), 'SKILL.md has Identity section');
       assert(skillContent.includes('## Principles'), 'SKILL.md has Principles section');
       assert(skillContent.includes('## Critical Actions'), 'SKILL.md has Critical Actions section');
@@ -113,7 +113,7 @@ async function runTests() {
       assert(!skillContent.includes('_bmad/bmm/'), 'SKILL.md has no _bmad/bmm/ references');
       assert(!skillContent.includes('module: bmm'), 'SKILL.md has no module: bmm references');
     } else {
-      assert(false, 'SKILL.md exists', 'src/agents/tea-agent-testarch/SKILL.md not found');
+      assert(false, 'SKILL.md exists', 'src/agents/bmad-tea/SKILL.md not found');
     }
 
     // Validate bmad-skill-manifest.yaml
@@ -121,9 +121,9 @@ async function runTests() {
       const manifest = yaml.load(await fs.readFile(manifestPath, 'utf8'));
 
       assert(manifest.type === 'agent', 'Manifest has type: agent');
-      assert(manifest.name === 'tea-agent-testarch', 'Manifest has correct name');
+      assert(manifest.name === 'bmad-tea', 'Manifest has correct name');
       assert(manifest.module === 'tea', 'Manifest has module: tea');
-      assert(manifest.canonicalId === 'tea-agent-testarch', 'Manifest has correct canonicalId');
+      assert(manifest.canonicalId === 'bmad-tea', 'Manifest has correct canonicalId');
       assert(manifest.webskip === true, 'Manifest has webskip: true');
       assert(manifest.hasSidecar === false, 'Manifest has hasSidecar: false');
 
@@ -144,7 +144,7 @@ async function runTests() {
         assert(await pathExists(workflowDir), `Capability skill ${skillDir} has matching workflow directory`);
       }
     } else {
-      assert(false, 'bmad-skill-manifest.yaml exists', 'src/agents/tea-agent-testarch/bmad-skill-manifest.yaml not found');
+      assert(false, 'bmad-skill-manifest.yaml exists', 'src/agents/bmad-tea/bmad-skill-manifest.yaml not found');
     }
   } catch (error) {
     assert(false, 'TEA agent native skill structure validates', error.message);
