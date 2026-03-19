@@ -212,16 +212,6 @@ All workflows implement the **trivariate step pattern** (Create/Edit/Validate):
 - Agent schema validation for module independence
 - Pre-commit hook compatibility with documentation build process
 
-### Migration Guide
-
-For users migrating from BMM-embedded TEA, see [`docs/MIGRATION.md`](docs/MIGRATION.md) for:
-
-- Command namespace updates
-- Installation instructions
-- Configuration changes
-- Path reference updates
-- Troubleshooting common issues
-
 ### Documentation
 
 - Website: [test-architect.bmad-method.org](https://test-architect.bmad-method.org) (upcoming)
@@ -249,5 +239,3 @@ For users migrating from BMM-embedded TEA, see [`docs/MIGRATION.md`](docs/MIGRAT
   - Complete documentation suite
 
 ---
-
-_For detailed migration instructions, see [docs/MIGRATION.md](docs/MIGRATION.md)_

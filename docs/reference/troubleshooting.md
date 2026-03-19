@@ -682,7 +682,6 @@ When reporting issues, include:
 1. **Documentation**: [test-architect.bmad-method.org](https://test-architect.bmad-method.org)
 2. **GitHub Issues**: [Report a bug](https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise/issues/new?template=issue.md)
 3. **GitHub Discussions**: [Ask a question](https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise/discussions)
-4. **Migration Guide**: [docs/MIGRATION.md](/docs/MIGRATION.md) for upgrade issues
 
 ### Before Reporting an Issue
 
