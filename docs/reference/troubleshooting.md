@@ -204,6 +204,20 @@ If the BMAD installer can run but cannot fetch the Test Architect module from Gi
    $bmad-tea-testarch-test-design
    ```
 
+### Custom TEA Workflow Does Not Appear
+
+**Symptom**: A custom workflow used to be available from TEA, but it no longer appears in the `bmad-tea` menu after updates.
+
+**Cause**: TEA is now a standalone module. Custom workflows are not merged into TEA core automatically.
+
+**Solution**:
+
+1. Package the workflow as custom content or a custom module instead of editing TEA directly.
+2. Attach it to `bmad-tea` using the generated agent customization file under `_bmad/_config/agents/`.
+3. Re-run `npx bmad-method install` so the customization and workflow registration are refreshed.
+
+See [Extend TEA with Custom Workflows](/docs/how-to/customization/extend-tea-with-custom-workflows.md).
+
 ---
 
 ## Workflow Execution Issues

@@ -147,8 +147,8 @@ TEA variables are defined in `src/module.yaml` and prompted during install:
 
 - `test_artifacts` — base output folder for test artifacts
 - `tea_use_playwright_utils` — enable Playwright Utils integration (boolean)
-- `tea_use_pactjs_utils` — enable Pact.js Utils integration for contract testing (boolean)
-- `tea_pact_mcp` — SmartBear MCP for PactFlow/Broker interaction: mcp, none (string)
+- `tea_use_pactjs_utils` — enable Pact.js Utils integration for contract testing when your project explicitly uses Pact (boolean)
+- `tea_pact_mcp` — SmartBear MCP for PactFlow/Broker interaction when broker integration is needed: mcp, none (string)
 - `tea_browser_automation` — browser automation mode: auto, cli, mcp, none (string)
 - `test_framework` — detected or configured test framework (Playwright, Cypress, Jest, Vitest, pytest, JUnit, Go test, dotnet test, RSpec)
 - `test_stack_type` — detected or configured stack type (frontend, backend, fullstack)
@@ -187,6 +187,16 @@ src/
     ├── tea-index.csv
     └── knowledge/
 ```
+
+## Extending TEA
+
+Custom workflows are still compatible with TEA, but they are no longer implicitly absorbed into TEA core. The supported path is:
+
+1. Package the workflow as custom content or a custom module.
+2. Attach it to `bmad-tea` using the agent customization flow.
+3. Reinstall/update BMAD so the new menu item and workflow are registered.
+
+See [Extend TEA with Custom Workflows](/docs/how-to/customization/extend-tea-with-custom-workflows.md) and the BMAD customization guide at [`BMAD-METHOD/docs/how-to/customize-bmad.md`](https://github.com/bmad-code-org/BMAD-METHOD/blob/main/docs/how-to/customize-bmad.md).
 
 ## Contributing
 

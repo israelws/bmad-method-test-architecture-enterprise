@@ -30,8 +30,8 @@ user_skill_level: intermediate
 output_folder: _bmad-output
 test_artifacts: _bmad-output/test-artifacts
 tea_use_playwright_utils: true
-tea_use_pactjs_utils: true
-tea_pact_mcp: 'mcp'
+tea_use_pactjs_utils: false
+tea_pact_mcp: 'none'
 tea_browser_automation: 'auto'
 tea_execution_mode: 'auto'
 tea_capability_probe: true
@@ -135,7 +135,7 @@ npm install -D @seontechnologies/playwright-utils
 
 ### tea_use_pactjs_utils
 
-Enable Pact.js Utils integration for production-ready contract testing utilities.
+Enable Pact.js Utils integration for production-ready consumer-driven contract testing utilities.
 
 **Schema Location:** `src/module.yaml` (TEA module config)
 
@@ -143,12 +143,12 @@ Enable Pact.js Utils integration for production-ready contract testing utilities
 
 **Type:** `boolean`
 
-**Default:** `true`
+**Default:** `false`
 
 **Installer Prompt:**
 
 ```
-Enable Pact.js Utils integration for contract testing?
+Enable Pact.js Utils for consumer-driven contract testing?
 ```
 
 **Purpose:** Enables TEA to:
@@ -167,6 +167,8 @@ Enable Pact.js Utils integration for contract testing?
 - `test-design` - Loads pactjs-utils fragments for system/epic planning
 - `test-review` - Uses pactjs-utils provider/review patterns
 - `ci` - Adds contract-test stage and quality gates
+
+**Use this when:** your team already practices consumer-driven contract testing or wants TEA to scaffold Pact-aware patterns on purpose. Leave it off for projects that do not use Pact.
 
 **Example (Enable):**
 
@@ -203,14 +205,14 @@ Pact MCP strategy for broker interaction during contract testing workflows.
 
 **Type:** `string`
 
-**Default:** `"mcp"`
+**Default:** `"none"`
 
 **Options:** `"mcp"` | `"none"`
 
 **Installer Prompt:**
 
 ```
-Enable SmartBear MCP for PactFlow/Pact Broker interaction?
+Enable SmartBear MCP for PactFlow/Pact Broker? Only needed if you already use a broker.
 ```
 
 **Purpose:** Controls whether TEA can use SmartBear MCP tools for:
@@ -225,6 +227,8 @@ Enable SmartBear MCP for PactFlow/Pact Broker interaction?
 - `automate` - Broker-assisted pact generation context
 - `test-review` - MCP-assisted pact review context
 - `ci` - MCP can-i-deploy/matrix guidance references
+
+**Use this when:** your project already uses PactFlow or Pact Broker and you want TEA to query broker state during review, generation, or gate guidance. Otherwise leave it set to `none`.
 
 **Prerequisites:**
 
@@ -960,8 +964,8 @@ project_name: my-project
 user_skill_level: beginner # or intermediate/expert
 output_folder: _bmad-output
 tea_use_playwright_utils: true # Recommended
-tea_use_pactjs_utils: true # Recommended - production-ready contract testing utilities
-tea_pact_mcp: 'mcp' # Recommended - SmartBear MCP for PactFlow/Broker interaction
+tea_use_pactjs_utils: false # Recommended unless you actively use contract testing
+tea_pact_mcp: 'none' # Recommended unless you already use PactFlow/Broker
 tea_browser_automation: 'auto' # Recommended
 tea_execution_mode: 'auto' # Recommended - capability-aware mode selection
 tea_capability_probe: true # Recommended - fallback safely if mode unsupported
@@ -970,7 +974,7 @@ tea_capability_probe: true # Recommended - fallback safely if mode unsupported
 **Why recommended:**
 
 - Playwright Utils: Production-ready fixtures and utilities
-- Pact.js Utils: Optional contract-testing acceleration for backend/fullstack services
+- Pact.js Utils: Leave disabled until the project explicitly needs contract testing
 - Browser automation (auto): Smart CLI/MCP selection with fallback
 - Together: The three-part stack (see [Testing as Engineering](/docs/explanation/testing-as-engineering.md))
 
@@ -1022,8 +1026,8 @@ tea_capability_probe: true
 project_name: monorepo
 output_folder: _bmad-output
 tea_use_playwright_utils: true
-tea_use_pactjs_utils: true
-tea_pact_mcp: 'mcp'
+tea_use_pactjs_utils: false
+tea_pact_mcp: 'none'
 tea_execution_mode: 'auto'
 ```
 
@@ -1061,10 +1065,10 @@ planning_artifacts: _bmad-output/planning-artifacts
 implementation_artifacts: _bmad-output/implementation-artifacts
 project_knowledge: docs
 
-# TEA Configuration (Recommended: Enable both for full stack)
+# TEA Configuration (Recommended baseline)
 tea_use_playwright_utils: true # Recommended - production-ready utilities
-tea_use_pactjs_utils: true # Recommended - production-ready contract testing utilities
-tea_pact_mcp: 'mcp' # Recommended - SmartBear MCP for broker integration
+tea_use_pactjs_utils: false # Opt in only if your service uses contract testing
+tea_pact_mcp: 'none' # Opt in only if your service uses PactFlow/Broker
 tea_browser_automation: 'auto' # Recommended - smart CLI/MCP selection
 tea_execution_mode: 'auto' # Recommended - capability-aware team/subagent fallback
 tea_capability_probe: true # Recommended - safe fallback
@@ -1094,6 +1098,24 @@ document_output_language: english
 7. (Optional) Enable Pact MCP:
    npm install -g @smartbear/mcp
    Set tea_pact_mcp: 'mcp'
+```
+
+---
+
+### Contract Testing Setup (Opt-In)
+
+Use this profile only for services that already use Pact or want TEA to scaffold contract-testing patterns on purpose.
+
+```yaml
+tea_use_pactjs_utils: true
+tea_pact_mcp: 'none' # Use 'mcp' only if you already use PactFlow/Broker
+```
+
+If you also use PactFlow or Pact Broker:
+
+```yaml
+tea_use_pactjs_utils: true
+tea_pact_mcp: 'mcp'
 ```
 
 ---

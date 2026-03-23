@@ -38,27 +38,27 @@ tea_use_playwright_utils:
 # ✅ ACTIVELY USED - Pact.js Utils integration for contract testing (referenced in workflows: automate, atdd, framework, test-design, test-review, ci)
 # CRITICAL: Must be boolean (true/false) not string - workflows check "if config.tea_use_pactjs_utils: true"
 tea_use_pactjs_utils:
-  prompt: "Enable Pact.js Utils integration for contract testing?"
-  default: true
+  prompt: "Enable Pact.js Utils for consumer-driven contract testing?"
+  default: false
   result: "{value}"
   single-select:
     - value: true
-      label: "Yes - Use production contract testing utilities"
+      label: "Yes - Enable optional contract-testing utilities"
     - value: false
-      label: "No - Use raw @pact-foundation/pact patterns"
+      label: "No - Skip Pact integration"
 
 # ✅ ACTIVELY USED - Pact MCP integration for broker interaction during contract testing
 # Controls how TEA interacts with PactFlow/Pact Broker during test generation and review
 # CRITICAL: Must be a string value: "mcp" | "none"
 tea_pact_mcp:
-  prompt: "Enable SmartBear MCP for PactFlow/Pact Broker interaction?"
-  default: "mcp"
+  prompt: "Enable SmartBear MCP for PactFlow/Pact Broker? Only needed if you already use a broker."
+  default: "none"
   result: "{value}"
   single-select:
     - value: "mcp"
-      label: "Yes - Use SmartBear MCP for broker queries"
+      label: "Yes - Enable optional broker integration"
     - value: "none"
-      label: "No - Use CLI scripts only"
+      label: "No - No broker/MCP integration"
 
 # ✅ ACTIVELY USED - Browser automation strategy for TEA workflows
 # Controls how TEA interacts with live browsers during test generation

@@ -34,7 +34,7 @@ npx bmad-method install
 Then trigger workflows via chat:
 
 ```
-tea         # Load TEA agent
+bmad-tea    # Load TEA agent/menu
 test-design # Run Test Design workflow
 ```
 
@@ -46,6 +46,7 @@ Pick a path:
 - **TEA Lite**: Start with [Test Automation](/how-to/workflows/run-automate) only (30 minutes)
 - **Full TEA**: Start with the [TEA Overview](/explanation/tea-overview) for the complete workflow map
 - **Enterprise**: Choose [Greenfield](/how-to/brownfield/use-tea-for-enterprise) or [Brownfield](/how-to/brownfield/use-tea-with-existing-tests)
+- **Custom Extensions**: See [Extend TEA with Custom Workflows](/how-to/customization/extend-tea-with-custom-workflows)
 
 ## Core Workflows
 

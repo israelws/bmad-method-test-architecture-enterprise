@@ -343,7 +343,7 @@ Production-ready fixtures and utilities that enhance TEA workflows.
 Production-ready contract testing utilities that reduce raw Pact.js boilerplate and standardize provider verification patterns.
 
 - Install: `npm install -D @seontechnologies/pactjs-utils @pact-foundation/pact`
-- Config: `tea_use_pactjs_utils: true` (default is `true`)
+- Config: `tea_use_pactjs_utils: true` (default is `false`, opt in only when you want Pact-aware workflows)
 - Impacts: `framework`, `atdd`, `automate`, `test-design`, `test-review`, `ci`
 - Utilities include: createProviderState, toJsonMap, setJsonBody, setJsonContent, buildVerifierOptions, buildMessageVerifierOptions, createRequestFilter, noOpRequestFilter, handlePactBrokerUrlAndSelectors, getProviderVersionTags
 - Supports local monorepo flow (`pactUrls`) and remote broker flow (`PACT_BROKER_BASE_URL`, `PACT_BROKER_TOKEN`)
@@ -386,12 +386,12 @@ Optional MCP integration for design-time broker interaction in contract testing 
 
 **Configuration** (`_bmad/tea/config.yaml`):
 
-    tea_pact_mcp: "mcp"  # mcp | none
+    tea_pact_mcp: "none"  # none | mcp
 
 | Mode   | What happens                                                                                                        |
 | ------ | ------------------------------------------------------------------------------------------------------------------- |
 | `mcp`  | TEA can use SmartBear MCP tools for provider-state discovery, test review support, can-i-deploy, and matrix checks. |
-| `none` | TEA uses CLI/script guidance only for broker interactions.                                                          |
+| `none` | Default. TEA skips broker/MCP integration entirely unless you explicitly enable it.                                 |
 
 **Setup:**
 

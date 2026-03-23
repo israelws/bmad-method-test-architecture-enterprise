@@ -7,10 +7,13 @@ description: Quick reference for all 9 TEA workflows - inputs, outputs, and link
 
 Quick reference for all 9 TEA (Test Engineering Architect) workflows. For detailed step-by-step guides, see the how-to documentation.
 
+All workflows listed here are current and supported in TEA, including `nfr-assess`.
+
 **Invocation by tool:**
 
 - Claude Code / Cursor / Windsurf: use slash commands (for example, `/bmad:tea:automate`)
 - Codex: use `$` skills from `.agents/skills` (for example, `$bmad-tea-testarch-automate`)
+- Custom TEA extensions: package the workflow as custom content/module and attach it to `bmad-tea` via customization. See [Extend TEA with Custom Workflows](/docs/how-to/customization/extend-tea-with-custom-workflows.md)
 
 ## Quick Index
 

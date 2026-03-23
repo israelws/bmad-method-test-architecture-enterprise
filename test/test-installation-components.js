@@ -75,6 +75,16 @@ async function runTests() {
     assert(moduleYaml.name === 'Test Architect', 'module.yaml has correct name');
     assert(typeof moduleYaml.description === 'string' && moduleYaml.description.length > 0, 'module.yaml has description');
     assert(typeof moduleYaml.default_selected === 'boolean', 'module.yaml has boolean default_selected');
+    assert(moduleYaml.tea_use_pactjs_utils.default === false, 'module.yaml defaults Pact.js Utils to false');
+    assert(moduleYaml.tea_pact_mcp.default === 'none', 'module.yaml defaults Pact MCP to none');
+    assert(
+      moduleYaml.tea_use_pactjs_utils.prompt.includes('consumer-driven contract testing'),
+      'module.yaml Pact.js Utils prompt explains CDC intent',
+    );
+    assert(
+      moduleYaml.tea_pact_mcp.prompt.includes('Only needed if you already use a broker'),
+      'module.yaml Pact MCP prompt explains broker prerequisite',
+    );
   } catch (error) {
     assert(false, 'module.yaml loads and validates', error.message);
   }
@@ -222,6 +232,22 @@ async function runTests() {
         assert(false, `${dirName}/workflow.yaml validates`, error.message);
       }
     }
+  }
+
+  const frameworkScaffoldStepPath = path.join(
+    projectRoot,
+    'src/workflows/testarch/bmad-testarch-framework/steps-c/step-03-scaffold-framework.md',
+  );
+  try {
+    const frameworkScaffoldStep = await fs.readFile(frameworkScaffoldStepPath, 'utf8');
+    assert(frameworkScaffoldStep.includes('recurse.md'), 'framework scaffold step loads recurse.md when Playwright Utils is enabled');
+    assert(frameworkScaffoldStep.includes('log.md'), 'framework scaffold step loads log.md when Playwright Utils is enabled');
+    assert(
+      frameworkScaffoldStep.includes('intercept-network-call.md'),
+      'framework scaffold step conditionally loads intercept-network-call.md',
+    );
+  } catch (error) {
+    assert(false, 'framework scaffold fragment list validates', error.message);
   }
 
   console.log('');
