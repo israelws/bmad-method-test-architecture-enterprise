@@ -216,7 +216,7 @@ If the BMAD installer can run but cannot fetch the Test Architect module from Gi
 2. Attach it to `bmad-tea` using the generated agent customization file under `_bmad/_config/agents/`.
 3. Re-run `npx bmad-method install` so the customization and workflow registration are refreshed.
 
-See [Extend TEA with Custom Workflows](/docs/how-to/customization/extend-tea-with-custom-workflows.md).
+See [Extend TEA with Custom Workflows](../how-to/customization/extend-tea-with-custom-workflows.md).
 
 ---
 

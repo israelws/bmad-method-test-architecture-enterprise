@@ -196,7 +196,7 @@ Custom workflows are still compatible with TEA, but they are no longer implicitl
 2. Attach it to `bmad-tea` using the agent customization flow.
 3. Reinstall/update BMAD so the new menu item and workflow are registered.
 
-See [Extend TEA with Custom Workflows](/docs/how-to/customization/extend-tea-with-custom-workflows.md) and the BMAD customization guide at [`BMAD-METHOD/docs/how-to/customize-bmad.md`](https://github.com/bmad-code-org/BMAD-METHOD/blob/main/docs/how-to/customize-bmad.md).
+See [Extend TEA with Custom Workflows](docs/how-to/customization/extend-tea-with-custom-workflows.md) and the BMAD customization guide at [`BMAD-METHOD/docs/how-to/customize-bmad.md`](https://github.com/bmad-code-org/BMAD-METHOD/blob/main/docs/how-to/customize-bmad.md).
 
 ## Contributing
 
