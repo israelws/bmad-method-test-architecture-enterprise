@@ -14,7 +14,7 @@ partyModeWorkflow: '{project-root}/_bmad/core/workflows/party-mode/workflow.md'
 
 ## STEP GOAL:
 
-To provide menu-driven exploration of 41 TEA knowledge fragments organized by category, allowing deep-dive into specific advanced topics on-demand.
+To provide menu-driven exploration of 42 TEA knowledge fragments organized by category, allowing deep-dive into specific advanced topics on-demand.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -48,7 +48,7 @@ To provide menu-driven exploration of 41 TEA knowledge fragments organized by ca
 
 "🧪 **Session 7: Advanced Patterns** (Ongoing Exploration)
 
-**Objective:** Deep-dive into 41 TEA knowledge fragments
+**Objective:** Deep-dive into 42 TEA knowledge fragments
 
 **This session is different:**
 
@@ -57,7 +57,7 @@ To provide menu-driven exploration of 41 TEA knowledge fragments organized by ca
 - Can revisit this session anytime
 - No quiz - this is reference learning
 
-**41 Knowledge Fragments organized by category:**
+**42 Knowledge Fragments organized by category:**
 
 Let's explore!"
 
@@ -81,7 +81,7 @@ Set session-07-advanced `status: 'in-progress'` (only first time).
 - selector-resilience.md - Robust selectors
 - timing-debugging.md - Race condition fixes
 
-**2. Playwright Utils (18 fragments)**
+**2. Playwright Utils (19 fragments)**
 
 - overview.md - Playwright Utils overview
 - api-request.md - Typed HTTP client
@@ -100,6 +100,7 @@ Set session-07-advanced `status: 'in-progress'` (only first time).
 - pact-mcp.md - SmartBear MCP for PactFlow
 - pact-consumer-framework-setup.md - Consumer CDC framework setup
 - pact-consumer-di.md - DI pattern for Pact consumers
+- playwright-cli.md - CLI for AI browser automation
 - visual-debugging.md - Trace viewer workflows
 
 **3. Configuration & Governance (6 fragments)**

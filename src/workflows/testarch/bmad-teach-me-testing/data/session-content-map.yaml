@@ -158,6 +158,7 @@ sessions:
       categories:
         testing_patterns:
           - fixture-architecture.md
+          - fixtures-composition.md
           - network-first.md
           - data-factories.md
           - component-tdd.md
@@ -167,6 +168,7 @@ sessions:
           - timing-debugging.md
 
         playwright_utils:
+          - overview.md
           - api-request.md
           - network-recorder.md
           - intercept-network-call.md
@@ -183,6 +185,7 @@ sessions:
           - pact-mcp.md
           - pact-consumer-framework-setup.md
           - pact-consumer-di.md
+          - visual-debugging.md
 
         browser_automation:
           - playwright-cli.md
@@ -193,11 +196,13 @@ sessions:
           - selective-testing.md
           - feature-flags.md
           - risk-governance.md
+          - adr-quality-readiness-checklist.md
 
         quality_frameworks:
           - test-quality.md
           - test-levels-framework.md
           - test-priorities-matrix.md
+          - probability-impact.md
           - nfr-criteria.md
 
         auth_security:
@@ -211,4 +216,4 @@ sessions:
     key_concepts:
       - "Menu-driven fragment exploration"
       - "Just-in-time deep-dive learning"
-      - "41 knowledge fragments organized by category"
+      - "42 knowledge fragments organized by category"

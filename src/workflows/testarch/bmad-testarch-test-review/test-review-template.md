@@ -379,7 +379,7 @@ See [tea-index.csv](../../../agents/bmad-tea/resources/tea-index.csv) for comple
 
 If you have questions or feedback on this review:
 
-1. Review patterns in knowledge base: `agents/bmad-tea/resources/knowledge/`
+1. Review patterns in knowledge base: `../../../agents/bmad-tea/resources/knowledge/`
 2. Consult tea-index.csv for detailed guidance
 3. Request clarification on specific violations
 4. Pair with QA engineer to apply patterns

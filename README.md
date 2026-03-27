@@ -183,9 +183,11 @@ src/
 │       ├── bmad-testarch-test-design/
 │       ├── bmad-testarch-test-review/
 │       └── bmad-testarch-trace/
-└── testarch/
-    ├── tea-index.csv
-    └── knowledge/
+└── agents/
+    └── bmad-tea/
+        └── resources/
+            ├── tea-index.csv
+            └── knowledge/
 ```
 
 ## Extending TEA

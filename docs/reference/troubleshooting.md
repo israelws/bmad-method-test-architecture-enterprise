@@ -336,7 +336,7 @@ See [Extend TEA with Custom Workflows](../how-to/customization/extend-tea-with-c
 
    ```bash
    head -5 _bmad/tea/agents/bmad-tea/resources/tea-index.csv
-   # Should show: fragment_id,title,description,tags,file_path
+   # Should show: id,name,description,tags,tier,fragment_file
    ```
 
 4. Check workflow manifest:

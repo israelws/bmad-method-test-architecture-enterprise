@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Playwright CLI Integration**: New `playwright-cli.md` knowledge fragment (35 total)
+- **Playwright CLI Integration**: New `playwright-cli.md` knowledge fragment (42 total)
 - **Browser Automation Config**: New `tea_browser_automation` config with 4 modes: `auto`, `cli`, `mcp`, `none`
 - **Auto Mode Heuristic**: Smart CLI/MCP selection per workflow action with fallback
 - **How-To Guide**: `docs/how-to/customization/configure-browser-automation.md`
