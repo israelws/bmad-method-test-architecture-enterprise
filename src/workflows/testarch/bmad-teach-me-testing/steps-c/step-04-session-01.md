@@ -175,7 +175,7 @@ Present this content:
 
 **4. Engagement models:** Choose how much TEA you need (Lite → Solo → Integrated → Enterprise → Brownfield)
 
-**5. Knowledge fragments:** 35 fragments for deep-dive topics when you need them
+**5. Knowledge fragments:** 41 fragments for deep-dive topics when you need them
 
 - Testing patterns (fixtures, network-first, data factories)
 - Playwright Utils (api-request, network-recorder, recurse)

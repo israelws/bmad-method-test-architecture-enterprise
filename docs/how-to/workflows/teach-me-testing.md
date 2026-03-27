@@ -226,7 +226,7 @@ Skip fundamentals, focus on:
 - GitHub links for browsing source
 
 **Resources:** All 35 knowledge fragments
-**GitHub:** [Knowledge Base Repository](https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise/tree/main/src/testarch/knowledge)
+**GitHub:** [Knowledge Base Repository](https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise/tree/main/src/agents/bmad-tea/resources/knowledge)
 
 ## Completion Certificate
 
@@ -295,7 +295,7 @@ After completing TEA Academy, you're ready to use:
 
 - **Documentation:** [TEA Overview](/explanation/tea-overview/)
 - **Knowledge Base:** [Knowledge Base Reference](/reference/knowledge-base/)
-- **GitHub Fragments:** [Knowledge Base Repository](https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise/tree/main/src/testarch/knowledge)
+- **GitHub Fragments:** [Knowledge Base Repository](https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise/tree/main/src/agents/bmad-tea/resources/knowledge)
 
 ## Support
 

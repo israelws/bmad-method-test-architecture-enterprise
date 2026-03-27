@@ -146,7 +146,7 @@ All workflows implement the **trivariate step pattern** (Create/Edit/Validate):
   - Feature Flags & Testing Patterns (2 fragments)
   - Playwright-Utils Integration (6 fragments)
 - **Context Engineering**: Dynamic fragment loading per workflow
-- **CSV-Based Index**: `src/testarch/tea-index.csv` for fragment management
+- **CSV-Based Index**: `src/agents/bmad-tea/resources/tea-index.csv` for fragment management
 - **Consistency**: Ensures standardized outputs across workflows
 
 #### Documentation

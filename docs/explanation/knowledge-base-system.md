@@ -87,7 +87,7 @@ Without a knowledge base:
 
 **1. Manifest Defines Fragments**
 
-`src/testarch/tea-index.csv`:
+`src/agents/bmad-tea/resources/tea-index.csv`:
 
 ```csv
 id,name,description,tags,fragment_file

@@ -126,5 +126,5 @@ The workflow adapts examples based on your role:
 ## Support
 
 - **Documentation:** <https://bmad-code-org.github.io/bmad-method-test-architecture-enterprise/>
-- **Knowledge Fragments:** <https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise/tree/main/src/testarch/knowledge>
+- **Knowledge Fragments:** <https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise/tree/main/src/agents/bmad-tea/resources/knowledge>
 - **Issues:** Report via TEA module repository
