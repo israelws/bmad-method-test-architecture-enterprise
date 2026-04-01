@@ -156,7 +156,7 @@ Create `playwright.config.ts` or `cypress.config.ts` with:
 
 - **Timeouts**: action 15s, navigation 30s, test 60s
 - **Base URL**: env fallback (`BASE_URL`)
-- **Artifacts**: retain-on-failure (trace/screenshot/video)
+- **Artifacts**: trace `retain-on-failure-and-retries`, screenshot `only-on-failure`, video `retain-on-failure`
 - **Reporters**: HTML + JUnit + console
 - **Parallelism**: enabled (CI tuned)
 
