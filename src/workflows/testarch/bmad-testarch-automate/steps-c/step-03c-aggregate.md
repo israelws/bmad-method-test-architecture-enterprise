@@ -213,7 +213,7 @@ export const mockPaymentSuccess = async (page: Page) => {
 import { Page } from '@playwright/test';
 import { interceptNetworkCall } from '@seontechnologies/playwright-utils/intercept-network-call';
 
-export const observeApiCall = async (page: Page, urlPattern: string, method: string = 'GET') => {
+export const observeApiCall = (page: Page, urlPattern: string, method: string = 'GET') => {
   return interceptNetworkCall({
     page,
     method,

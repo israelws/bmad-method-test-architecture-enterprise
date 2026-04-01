@@ -21,7 +21,7 @@ Fast feedback loops and transparent debugging artifacts are critical for maintai
 
 ### Example 1: Playwright Trace Viewer Configuration (Production Pattern)
 
-**Context**: Capture traces for failures and retries so flaky runs can be compared directly. If storage is extremely constrained, fall back to `on-first-retry`.
+**Context**: Capture traces for failures and retries so flaky runs can be compared directly. Prefer `retain-on-failure-and-retries` as the default policy so failed retries can be compared with passing runs.
 
 **Implementation**:
 
@@ -65,9 +65,9 @@ export default defineConfig({
 npx playwright trace open path/to/trace.zip
 
 # Filter to the failing expectation or action from the terminal
-npx playwright trace actions --grep="expect"
-npx playwright trace action 9
-npx playwright trace snapshot 9 --name after
+npx playwright trace actions path/to/trace.zip --grep="expect"
+npx playwright trace action path/to/trace.zip 9
+npx playwright trace snapshot path/to/trace.zip 9 --name after
 
 # Or serve trace viewer:
 npx playwright show-report
@@ -202,12 +202,11 @@ export const test = base.extend<DebugFixture>({
       }));
       const networkRequests = await Promise.all(
         (await page.requests()).map(async (request: Request) => {
-          const response = request.existingResponse();
+          const response = await request.response();
           return {
             url: request.url(),
             method: request.method(),
             status: response?.status() ?? 0,
-            httpVersion: response?.httpVersion?.(),
           };
         }),
       );
@@ -510,7 +509,7 @@ test('debug state mutation', async ({ page }) => {
 
 Before deploying tests to CI, ensure:
 
-- [ ] **Artifact configuration**: `trace: 'retain-on-failure-and-retries'` (or `on-first-retry` if storage-constrained), `screenshot: 'only-on-failure'`, `video: 'retain-on-failure'`
+- [ ] **Artifact configuration**: `trace: 'retain-on-failure-and-retries'`, `screenshot: 'only-on-failure'`, `video: 'retain-on-failure'`
 - [ ] **CI artifact upload**: GitHub Actions/GitLab CI configured to upload `test-results/` and `playwright-report/`
 - [ ] **HAR recording**: Set up for flaky API tests (record once, replay deterministically)
 - [ ] **Custom debug fixtures**: Console logs + network summary captured on failure
