@@ -67,7 +67,7 @@ snapshot ref {role: "button", name: "Sign In"}
 
 **Evidence collection** — During `test-review`, TEA can capture screenshots, traces, and network logs as evidence without the overhead of a full MCP session.
 
-**Agent-side test debugging** — For existing failing Playwright tests, TEA should prefer Playwright's newer agent-facing debug loop over ad hoc manual reproduction: `npx playwright test --debug` to step through the paused test in Inspector, then `npx playwright trace ...` to inspect the resulting trace artifact from the command line.
+**Agent-side test debugging** — For existing failing Playwright tests, TEA should prefer Playwright's agent-facing debug loop over ad hoc manual reproduction: `npx playwright test --debug=cli` to step through the test in CLI mode (no GUI Inspector — designed for coding agents), then `npx playwright trace ...` to inspect the resulting trace artifact from the command line. The `--debug=cli` flag (Playwright 1.59+) lets agents attach, step through execution, and inspect page state without ever opening a browser window.
 
 ## How CLI Relates to Playwright Utils and API Testing
 
@@ -127,30 +127,82 @@ For parallel safety (multiple agents on the same machine), append a unique suffi
 playwright-cli -s=tea-explore-<timestamp> open https://app.com
 ```
 
-## Recent Playwright Debug Flows Worth Using
+## Autonomous Trace Investigation (Playwright 1.59+)
 
-For generated tests that already exist and are failing, Playwright now has a better native debugging loop than "re-run locally and guess."
+For generated tests that already exist and are failing, Playwright 1.59 introduced CLI-native debugging and trace analysis designed specifically for AI agents. Instead of downloading traces and opening the GUI Trace Viewer, agents can now consume the entire trace context directly from the command line.
+
+### Debug a Failing Test (CLI Mode)
 
 ```bash
-# Pause a failing test and attach through playwright-cli
-npx playwright test --debug
+# Start the test in CLI debug mode — no GUI Inspector, agent-friendly output
+npx playwright test --debug=cli
 playwright-cli attach <session-id>
 playwright-cli --session <session-id> step-over
+```
 
-# Inspect an existing trace artifact from CI or local runs
+With `--debug=cli`, the agent can:
+
+- Step through test execution in real-time
+- Inspect the page's HTML source at each step
+- Review network calls and console logs at the moment of failure
+- Capture before/after snapshots without opening a browser
+
+### Investigate a Trace Artifact
+
+```bash
+# Open a trace from CI or local runs (CLI, no browser needed)
 npx playwright trace open test-results/<run>/trace.zip
+
+# Jump to failing assertions
 npx playwright trace actions test-results/<run>/trace.zip --grep="expect"
+
+# Drill into a specific action by index
 npx playwright trace action test-results/<run>/trace.zip 9
+
+# Get the page snapshot after that action
 npx playwright trace snapshot test-results/<run>/trace.zip 9 --name after
 ```
 
-Use this when TEA is in healing/review mode:
+### Autonomous Diagnostic Loop
+
+When TEA encounters a failing test in healing/review mode, the recommended investigation flow is:
+
+1. **Run with `--debug=cli`** to step through the failure and identify the failing action
+2. **Capture the trace** (`tracing-start` / `tracing-stop`) or use an existing CI trace artifact
+3. **Filter to assertions** (`trace actions --grep="expect"`) to find the failure point
+4. **Inspect the snapshot** (`trace snapshot <n> --name after`) to see exact page state at failure
+5. **Analyze network/console** to rule out backend issues or timing problems
+6. **Propose a fix** — updated locator, added wait, or flagged flake for human review
+
+This reduces Mean Time to Repair (MTTR) by giving the agent full failure context rather than just an error message.
+
+### When to Use Each Tool
 
 - `playwright-cli` session commands remain the best lightweight tool for page exploration and selector verification.
-- `npx playwright test --debug` is better for stepping through an already-written failing test.
+- `npx playwright test --debug=cli` is better for stepping through an already-written failing test (agent-native, no GUI).
 - `npx playwright trace ...` is better for understanding flakes and assertion failures from saved artifacts.
 
 If your environment exposes the Playwright dashboard or bound-browser flow, it can help humans inspect what an agent is doing in the background, but TEA should treat that as optional observability rather than a hard dependency.
+
+### Binding a Browser for Agent Inspection (`browser.bind()`)
+
+Playwright 1.59 added `browser.bind()` — a programmatic API that makes a running browser instance available to `playwright-cli` and MCP clients. This is the bridge between "a test is running" and "an agent can see what the test sees."
+
+```typescript
+// In a test or fixture: bind the browser so playwright-cli can attach
+const { endpoint } = await browser.bind('my-debug-session', {
+  workspaceDir: process.cwd(),
+});
+// Now: playwright-cli attach my-debug-session
+```
+
+**When TEA uses this:**
+
+- **Debugging a complex E2E failure** — A test fixture calls `browser.bind()` before the failing scenario, then TEA runs `playwright-cli attach` to inspect live page state, network, and console without re-running the test from scratch.
+- **Bridging CLI and MCP** — A bound browser is accessible to both `playwright-cli` and `@playwright/mcp`. TEA's `auto` mode can start with lightweight CLI inspection and escalate to MCP if richer introspection is needed, all against the same browser instance.
+- **CI artifact enhancement** — A CI helper can bind the browser during test runs, letting a post-failure agent attach and investigate before the process exits.
+
+Call `browser.unbind()` when done to release the session.
 
 ## Command Quick Reference
 
@@ -179,7 +231,7 @@ If your environment exposes the Playwright dashboard or bound-browser flow, it c
 | "Verify this selector exists"         | CLI  | Single check, minimal tokens       |
 | "Capture a screenshot for evidence"   | CLI  | Stateless capture                  |
 | "Walk through a multi-step wizard"    | MCP  | State carries across steps         |
-| "Debug why this test fails" (healing) | MCP  | Needs rich DOM introspection       |
+| "Debug why this test fails" (healing) | CLI  | `--debug=cli` + trace analysis     |
 | "Record a drag-and-drop flow"         | MCP  | Complex interaction semantics      |
 
 ## Related Fragments
