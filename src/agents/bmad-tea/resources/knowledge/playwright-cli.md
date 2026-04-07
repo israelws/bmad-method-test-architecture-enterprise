@@ -103,11 +103,31 @@ test('GET /api/users returns user list', async ({ apiRequest }) => {
 });
 ```
 
-**For pure API testing** (no UI involved), CLI doesn't add much — there's no page to snapshot. The agent generates API tests directly from documentation, specs, or code analysis using `apiRequest` and `recurse` from playwright-utils.
+**For pure API testing** (no UI involved), `playwright-cli` browser commands (snapshot, screenshot, click) don't apply — there's no page. But **trace analysis is highly valuable**. Playwright captures full network traces for API tests (requests, responses, headers, timing), and the trace CLI lets the agent inspect them programmatically:
 
-**For E2E testing**, CLI shines — it snapshots the page to get accurate selectors, observes network calls to understand the API contract, and captures auth flows via `state-save` that inform how tests use `auth-session`.
+```bash
+# API test fails in CI → open the trace artifact
+npx playwright trace open test-results/api-users/trace.zip
 
-**Bottom line:** CLI helps the agent _write better tests_. Playwright-utils helps those tests _run reliably_.
+# What HTTP call failed?
+npx playwright trace requests --failed
+# Output: #3  POST /api/users  → 422  12ms
+
+# Full request/response details (headers, body, timing)
+npx playwright trace request 3
+
+# What assertion failed and why?
+npx playwright trace errors
+
+# Done
+npx playwright trace close
+```
+
+This gives the agent the full HTTP conversation — wrong payload, expired auth token, schema mismatch, upstream 5xx — without a human opening UI mode. The agent generates API tests directly from documentation, specs, or code analysis using `apiRequest` and `recurse` from playwright-utils, and uses trace analysis to diagnose failures.
+
+**For E2E testing**, CLI shines at both ends — browser commands (snapshot, screenshot) during test generation, and trace analysis (actions, snapshots, requests) during debugging.
+
+**Bottom line:** CLI helps the agent _write better tests_. Playwright-utils helps those tests _run reliably_. Trace analysis helps the agent _fix them when they break_.
 
 ## Session Isolation
 
@@ -150,17 +170,33 @@ With `--debug=cli`, the agent can:
 ### Investigate a Trace Artifact
 
 ```bash
-# Open a trace from CI or local runs (CLI, no browser needed)
+# Open a trace from CI or local runs — this starts a session
 npx playwright trace open test-results/<run>/trace.zip
 
-# Jump to failing assertions
-npx playwright trace actions test-results/<run>/trace.zip --grep="expect"
+# List all actions as a numbered tree (# column = 1-based ordinal)
+npx playwright trace actions
+# Output: #  Time     Action                Duration
+#         1  0:00.00  navigate(...)         120ms
+#         2  0:00.12  fill(#email, ...)     45ms
+#         ...
+#         9  0:01.50  expect(toBeVisible)   ✗ 30s
 
-# Drill into a specific action by index
-npx playwright trace action test-results/<run>/trace.zip 9
+# Filter to failing assertions
+npx playwright trace actions --grep="expect"
 
-# Get the page snapshot after that action
-npx playwright trace snapshot test-results/<run>/trace.zip 9 --name after
+# Drill into action #9 (the ordinal from the list above)
+npx playwright trace action 9
+
+# See the page snapshot after that action (valid: before | input | after)
+npx playwright trace snapshot 9 --name after
+
+# Other useful subcommands
+npx playwright trace errors                  # errors with stack traces
+npx playwright trace requests --failed       # failed network requests
+npx playwright trace console --errors-only   # console errors
+
+# Close when done (removes extracted data)
+npx playwright trace close
 ```
 
 ### Autonomous Diagnostic Loop
@@ -168,7 +204,7 @@ npx playwright trace snapshot test-results/<run>/trace.zip 9 --name after
 When TEA encounters a failing test in healing/review mode, the recommended investigation flow is:
 
 1. **Run with `--debug=cli`** to step through the failure and identify the failing action
-2. **Capture the trace** (`tracing-start` / `tracing-stop`) or use an existing CI trace artifact
+2. **Get a trace artifact** — configure `trace: 'retain-on-failure'` in `playwright.config.ts` (recommended), add `--trace=retain-on-failure` to the test run, or use an existing CI trace artifact. For `playwright-cli` sessions (not `--debug=cli`), use `tracing-start` / `tracing-stop` instead.
 3. **Filter to assertions** (`trace actions --grep="expect"`) to find the failure point
 4. **Inspect the snapshot** (`trace snapshot <n> --name after`) to see exact page state at failure
 5. **Analyze network/console** to rule out backend issues or timing problems
@@ -202,7 +238,7 @@ const { endpoint } = await browser.bind('my-debug-session', {
 - **Bridging CLI and MCP** — A bound browser is accessible to both `playwright-cli` and `@playwright/mcp`. TEA's `auto` mode can start with lightweight CLI inspection and escalate to MCP if richer introspection is needed, all against the same browser instance.
 - **CI artifact enhancement** — A CI helper can bind the browser during test runs, letting a post-failure agent attach and investigate before the process exits.
 
-Call `browser.unbind()` when done to release the session.
+Call `await browser.unbind()` when done to release the session (async — must be awaited).
 
 ## Command Quick Reference
 
