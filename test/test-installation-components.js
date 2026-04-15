@@ -106,8 +106,8 @@ async function runTests() {
       const skillContent = await fs.readFile(skillMdPath, 'utf8');
 
       assert(skillContent.includes('name: bmad-tea'), 'SKILL.md has correct skill name in frontmatter');
-      assert(skillContent.includes('## Identity'), 'SKILL.md has Identity section');
-      assert(skillContent.includes('## Principles'), 'SKILL.md has Principles section');
+      assert(skillContent.includes('resolve-customization.py'), 'SKILL.md resolves customization from script');
+      assert(skillContent.includes('{persona.displayName}'), 'SKILL.md reads persona from customization');
       assert(skillContent.includes('## Critical Actions'), 'SKILL.md has Critical Actions section');
       assert(skillContent.includes('## Capabilities'), 'SKILL.md has Capabilities section');
       assert(skillContent.includes('## On Activation'), 'SKILL.md has On Activation section');
