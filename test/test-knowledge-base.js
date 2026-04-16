@@ -88,7 +88,12 @@ function runTests() {
     const csv = fs.readFileSync(indexPath, 'utf8');
     records = parse(csv, { columns: true, skip_empty_lines: true });
 
-    assert(records.length === 42, 'tea-index.csv has 42 fragment records', `Found ${records.length}`);
+    const expectedFragmentCount = fs.readdirSync(path.join(kbRoot, 'knowledge')).filter((f) => f.endsWith('.md')).length;
+    assert(
+      records.length === expectedFragmentCount,
+      `tea-index.csv has ${expectedFragmentCount} fragment records`,
+      `Found ${records.length}`,
+    );
 
     const requiredFields = ['id', 'name', 'description', 'tags', 'tier', 'fragment_file'];
     const missingFields = requiredFields.filter((field) => !Object.prototype.hasOwnProperty.call(records[0] || {}, field));
