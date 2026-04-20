@@ -4,6 +4,8 @@
  * Scans for agent definitions in src/agents/:
  * - Legacy format: *.agent.yaml (validated against Zod schema)
  * - Native skill format: {name}/bmad-skill-manifest.yaml + SKILL.md
+ * - BMM native format: {name}/customize.toml + SKILL.md, with the agent's
+ *   essence declared under the top-level agents: array in src/module.yaml
  *
  * Usage: node tools/validate-agent-schema.js [project_root]
  * Exit codes: 0 = success, 1 = validation failures
@@ -40,6 +42,77 @@ async function main(customProjectRoot) {
     cwd: project_root,
     absolute: true,
   });
+
+  // BMM-native agents: customize.toml + SKILL.md, with essence in module.yaml agents: array
+  const bmmAgents = await glob('src/agents/*/customize.toml', {
+    cwd: project_root,
+    absolute: true,
+  });
+
+  // If no legacy agents and no manifest-style agents, fall through to BMM-native validation
+  if (agentFiles.length === 0 && skillManifests.length === 0 && bmmAgents.length > 0) {
+    console.log(`Found ${bmmAgents.length} BMM-native agent(s) (customize.toml + SKILL.md + module.yaml agents:)\n`);
+
+    const moduleYamlPath = path.join(project_root, 'src/module.yaml');
+    let moduleAgents = [];
+    if (fs.existsSync(moduleYamlPath)) {
+      try {
+        const parsed = yaml.parse(fs.readFileSync(moduleYamlPath, 'utf8'));
+        if (parsed && Array.isArray(parsed.agents)) moduleAgents = parsed.agents;
+      } catch (error) {
+        console.log(`❌ Failed to parse src/module.yaml: ${error.message}`);
+        process.exit(1);
+      }
+    }
+
+    const bmmErrors = [];
+    for (const customizePath of bmmAgents) {
+      const relativePath = path.relative(process.cwd(), customizePath);
+      const agentDir = path.dirname(customizePath);
+      const agentCode = path.basename(agentDir);
+      const issues = [];
+
+      if (!fs.existsSync(path.join(agentDir, 'SKILL.md'))) {
+        issues.push({ message: 'Missing SKILL.md file alongside customize.toml' });
+      }
+
+      const customizeRaw = fs.readFileSync(customizePath, 'utf8');
+      if (!customizeRaw.includes('[agent]')) {
+        issues.push({ message: 'customize.toml must declare an [agent] section' });
+      }
+
+      const rosterEntry = moduleAgents.find((entry) => entry && entry.code === agentCode);
+      if (rosterEntry) {
+        const requiredRosterFields = ['name', 'title', 'icon', 'description', 'team'];
+        const missing = requiredRosterFields.filter((f) => !rosterEntry[f]);
+        if (missing.length > 0) {
+          issues.push({ message: `src/module.yaml agents: entry for "${agentCode}" missing fields: ${missing.join(', ')}` });
+        }
+      } else {
+        issues.push({
+          message: `No matching entry in src/module.yaml agents: for code "${agentCode}" — the BMM central config roster won't pick this agent up on install`,
+        });
+      }
+
+      if (issues.length > 0) {
+        bmmErrors.push({ file: relativePath, issues });
+      } else {
+        console.log(`✅ ${relativePath}`);
+      }
+    }
+
+    if (bmmErrors.length > 0) {
+      console.log('\n❌ Validation failed:\n');
+      for (const { file, issues } of bmmErrors) {
+        console.log(`\n📄 ${file}`);
+        for (const issue of issues) console.log(`   Error: ${issue.message}`);
+      }
+      process.exit(1);
+    }
+
+    console.log(`\n✨ All ${bmmAgents.length} BMM-native agent(s) passed validation!\n`);
+    process.exit(0);
+  }
 
   // If no legacy agents found, validate native skills or fail
   if (agentFiles.length === 0) {

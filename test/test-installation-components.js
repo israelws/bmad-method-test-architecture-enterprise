@@ -99,63 +99,104 @@ async function runTests() {
   try {
     const skillDir = path.join(projectRoot, 'src/agents/bmad-tea');
     const skillMdPath = path.join(skillDir, 'SKILL.md');
-    const manifestPath = path.join(skillDir, 'bmad-skill-manifest.yaml');
+    const customizePath = path.join(skillDir, 'customize.toml');
 
-    // Validate SKILL.md exists and has required sections
+    // Validate SKILL.md matches the new BMM agent activation pattern
     if (await pathExists(skillMdPath)) {
       const skillContent = await fs.readFile(skillMdPath, 'utf8');
 
       assert(skillContent.includes('name: bmad-tea'), 'SKILL.md has correct skill name in frontmatter');
-      assert(skillContent.includes('resolve-customization.py'), 'SKILL.md resolves customization from script');
-      assert(skillContent.includes('{persona.displayName}'), 'SKILL.md reads persona from customization');
-      assert(skillContent.includes('## Critical Actions'), 'SKILL.md has Critical Actions section');
-      assert(skillContent.includes('## Capabilities'), 'SKILL.md has Capabilities section');
       assert(skillContent.includes('## On Activation'), 'SKILL.md has On Activation section');
+      assert(
+        skillContent.includes('{project-root}/_bmad/scripts/resolve_customization.py'),
+        'SKILL.md routes customization through the shared resolver',
+      );
+      assert(skillContent.includes('--key agent'), 'SKILL.md resolves the [agent] customization block');
+      assert(skillContent.includes('{agent.role}'), 'SKILL.md layers {agent.role} onto the persona');
+      assert(skillContent.includes('{agent.identity}'), 'SKILL.md layers {agent.identity} onto the persona');
+      assert(skillContent.includes('{agent.principles}'), 'SKILL.md layers {agent.principles} onto the persona');
+      assert(skillContent.includes('{agent.persistent_facts}'), 'SKILL.md loads {agent.persistent_facts}');
+      assert(skillContent.includes('{agent.menu}'), 'SKILL.md dispatches from {agent.menu}');
+      assert(skillContent.includes('activation_steps_prepend'), 'SKILL.md runs activation_steps_prepend');
+      assert(skillContent.includes('activation_steps_append'), 'SKILL.md runs activation_steps_append');
+      assert(skillContent.includes('## Critical Actions'), 'SKILL.md has Critical Actions section');
 
-      // Verify all 9 capability codes are present in the capabilities table
-      const capabilityCodes = ['TMT', 'TF', 'AT', 'TA', 'TD', 'TR', 'NR', 'CI', 'RV'];
-      for (const code of capabilityCodes) {
-        const codePattern = new RegExp(`\\|\\s*${code}\\s*\\|`);
-        assert(codePattern.test(skillContent), `SKILL.md has capability code ${code}`);
-      }
-
-      // Verify no BMM references
+      // Verify old-pattern artifacts are gone
+      assert(!skillContent.includes('resolve-customization.py'), 'SKILL.md no longer calls the per-skill resolver stub');
+      assert(!skillContent.includes('{persona.displayName}'), 'SKILL.md no longer uses the old {persona.*} namespace');
       assert(!skillContent.includes('_bmad/bmm/'), 'SKILL.md has no _bmad/bmm/ references');
       assert(!skillContent.includes('module: bmm'), 'SKILL.md has no module: bmm references');
     } else {
       assert(false, 'SKILL.md exists', 'src/agents/bmad-tea/SKILL.md not found');
     }
 
-    // Validate bmad-skill-manifest.yaml
-    if (await pathExists(manifestPath)) {
-      const manifest = yaml.load(await fs.readFile(manifestPath, 'utf8'));
+    // Validate customize.toml carries the agent essence + menu in the new [agent] namespace.
+    // Parse with a tiny line-by-line reader — good enough for flat key/value assertions
+    // without adding a TOML dep.
+    if (await pathExists(customizePath)) {
+      const customizeContent = await fs.readFile(customizePath, 'utf8');
 
-      assert(manifest.type === 'agent', 'Manifest has type: agent');
-      assert(manifest.name === 'bmad-tea', 'Manifest has correct name');
-      assert(manifest.module === 'tea', 'Manifest has module: tea');
-      assert(manifest.canonicalId === 'bmad-tea', 'Manifest has correct canonicalId');
-      assert(manifest.webskip === true, 'Manifest has webskip: true');
-      assert(manifest.hasSidecar === false, 'Manifest has hasSidecar: false');
+      assert(customizeContent.includes('[agent]'), 'customize.toml has [agent] section');
+      assert(/^\s*name\s*=\s*"Murat"/m.test(customizeContent), 'customize.toml pins agent.name = "Murat"');
+      assert(/^\s*title\s*=\s*"Master Test Architect and Quality Advisor"/m.test(customizeContent), 'customize.toml pins agent.title');
+      assert(/^\s*icon\s*=\s*"🧪"/m.test(customizeContent), 'customize.toml pins agent.icon');
+      assert(customizeContent.includes('persistent_facts'), 'customize.toml defines persistent_facts');
+      assert(
+        customizeContent.includes('file:{project-root}/**/project-context.md'),
+        'customize.toml loads project-context.md as a persistent fact',
+      );
+      assert(customizeContent.includes('activation_steps_prepend'), 'customize.toml defines activation_steps_prepend');
+      assert(customizeContent.includes('activation_steps_append'), 'customize.toml defines activation_steps_append');
 
-      // Verify all 9 capability skill IDs reference real workflow directories
-      const expectedSkillDirs = [
-        'bmad-teach-me-testing',
-        'bmad-testarch-framework',
-        'bmad-testarch-atdd',
-        'bmad-testarch-automate',
-        'bmad-testarch-test-design',
-        'bmad-testarch-trace',
-        'bmad-testarch-nfr',
-        'bmad-testarch-ci',
-        'bmad-testarch-test-review',
+      // Verify all 9 capability codes live on the [[agent.menu]] array-of-tables
+      const expectedMenu = [
+        { code: 'TMT', skill: 'bmad-teach-me-testing' },
+        { code: 'TF', skill: 'bmad-testarch-framework' },
+        { code: 'AT', skill: 'bmad-testarch-atdd' },
+        { code: 'TA', skill: 'bmad-testarch-automate' },
+        { code: 'TD', skill: 'bmad-testarch-test-design' },
+        { code: 'TR', skill: 'bmad-testarch-trace' },
+        { code: 'NR', skill: 'bmad-testarch-nfr' },
+        { code: 'CI', skill: 'bmad-testarch-ci' },
+        { code: 'RV', skill: 'bmad-testarch-test-review' },
       ];
-      for (const skillDir of expectedSkillDirs) {
-        const workflowDir = path.join(projectRoot, `src/workflows/testarch/${skillDir}`);
-        assert(await pathExists(workflowDir), `Capability skill ${skillDir} has matching workflow directory`);
+      for (const { code, skill } of expectedMenu) {
+        const codePattern = new RegExp(`\\[\\[agent\\.menu]]\\s*\\ncode\\s*=\\s*"${code}"`);
+        assert(codePattern.test(customizeContent), `customize.toml has [[agent.menu]] entry for code ${code}`);
+        assert(customizeContent.includes(`skill = "${skill}"`), `customize.toml menu ${code} dispatches to ${skill}`);
+        const workflowDir = path.join(projectRoot, `src/workflows/testarch/${skill}`);
+        assert(await pathExists(workflowDir), `Capability skill ${skill} has matching workflow directory`);
       }
     } else {
-      assert(false, 'bmad-skill-manifest.yaml exists', 'src/agents/bmad-tea/bmad-skill-manifest.yaml not found');
+      assert(false, 'customize.toml exists', 'src/agents/bmad-tea/customize.toml not found');
     }
+
+    // module.yaml must declare the agent essence for the BMM central config roster
+    const moduleYamlPath = path.join(projectRoot, 'src/module.yaml');
+    const moduleYaml = yaml.load(await fs.readFile(moduleYamlPath, 'utf8'));
+    assert(Array.isArray(moduleYaml.agents), 'module.yaml has agents: array');
+    const teaAgentEntry = (moduleYaml.agents || []).find((entry) => entry && entry.code === 'bmad-tea');
+    assert(teaAgentEntry !== undefined, 'module.yaml agents: contains bmad-tea entry');
+    if (teaAgentEntry) {
+      assert(teaAgentEntry.name === 'Murat', 'module.yaml bmad-tea entry has name: Murat');
+      assert(teaAgentEntry.title && teaAgentEntry.title.length > 0, 'module.yaml bmad-tea entry has a title');
+      assert(teaAgentEntry.icon === '🧪', 'module.yaml bmad-tea entry has icon 🧪');
+      assert(teaAgentEntry.team === 'tea', 'module.yaml bmad-tea entry has team: tea');
+      assert(
+        typeof teaAgentEntry.description === 'string' && teaAgentEntry.description.length > 0,
+        'module.yaml bmad-tea entry has a description',
+      );
+    }
+
+    // Old-pattern files must be gone
+    assert(
+      !(await pathExists(path.join(skillDir, 'bmad-skill-manifest.yaml'))),
+      'Legacy bmad-skill-manifest.yaml is removed from the agent',
+    );
+    assert(
+      !(await pathExists(path.join(skillDir, 'scripts', 'resolve-customization.py'))),
+      'Legacy per-agent resolve-customization.py is removed',
+    );
   } catch (error) {
     assert(false, 'TEA agent native skill structure validates', error.message);
   }
