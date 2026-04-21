@@ -268,6 +268,7 @@ async function runTests() {
     const skillMdPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/SKILL.md`);
     const workflowMdPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/workflow.md`);
     const workflowYamlPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/workflow.yaml`);
+    const instructionsMdPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/instructions.md`);
 
     if (await pathExists(skillMdPath)) {
       try {
@@ -317,6 +318,63 @@ async function runTests() {
         assert(!yamlContent.includes('_bmad/bmm/'), `${dirName} has no _bmad/bmm/ references`);
       } catch (error) {
         assert(false, `${dirName}/workflow.yaml validates`, error.message);
+      }
+    }
+
+    if (await pathExists(instructionsMdPath)) {
+      try {
+        const instructionsContent = await fs.readFile(instructionsMdPath, 'utf8');
+        assert(!instructionsContent.includes('`./steps-'), `${dirName}/instructions.md has no bare relative step references`);
+        assert(
+          instructionsContent.includes('`{skill-root}/steps-c/') ||
+            instructionsContent.includes('`{skill-root}/steps-v/') ||
+            instructionsContent.includes('`{skill-root}/steps-e/'),
+          `${dirName}/instructions.md anchors step entrypoints to {skill-root}`,
+        );
+      } catch (error) {
+        assert(false, `${dirName}/instructions.md validates`, error.message);
+      }
+    }
+
+    for (const stepDir of ['steps-c', 'steps-e', 'steps-v']) {
+      const stepDirPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/${stepDir}`);
+      if (!(await pathExists(stepDirPath))) continue;
+
+      const stepFiles = (await fs.readdir(stepDirPath)).filter((fileName) => fileName.endsWith('.md'));
+      for (const fileName of stepFiles) {
+        const stepPath = path.join(stepDirPath, fileName);
+        try {
+          const stepContent = await fs.readFile(stepPath, 'utf8');
+          const stepLabel = `${dirName}/${stepDir}/${fileName}`;
+
+          assert(!stepContent.includes("nextStepFile: './"), `${stepLabel} has no cwd-sensitive nextStepFile`);
+          if (stepContent.includes('nextStepFile:')) {
+            assert(/nextStepFile: '\{skill-root\}\/steps-[cev]\//.test(stepContent), `${stepLabel} anchors nextStepFile to {skill-root}`);
+          }
+
+          assert(!stepContent.includes("validationChecklist: '../checklist.md'"), `${stepLabel} has no relative validation checklist path`);
+          if (stepContent.includes('validationChecklist:')) {
+            assert(
+              stepContent.includes("validationChecklist: '{skill-root}/checklist.md'"),
+              `${stepLabel} anchors validationChecklist to {skill-root}`,
+            );
+          }
+
+          assert(!stepContent.includes("checklistFile: '../checklist.md'"), `${stepLabel} has no relative checklistFile path`);
+          if (stepContent.includes('checklistFile:')) {
+            assert(
+              stepContent.includes("checklistFile: '{skill-root}/checklist.md'"),
+              `${stepLabel} anchors checklistFile to {skill-root}`,
+            );
+          }
+
+          assert(!stepContent.includes("workflowPath: '../'"), `${stepLabel} has no relative workflowPath`);
+          if (stepContent.includes('workflowPath:')) {
+            assert(stepContent.includes("workflowPath: '{skill-root}'"), `${stepLabel} anchors workflowPath to {skill-root}`);
+          }
+        } catch (error) {
+          assert(false, `${dirName}/${stepDir}/${fileName} validates`, error.message);
+        }
       }
     }
   }
