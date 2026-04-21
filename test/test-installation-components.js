@@ -265,7 +265,47 @@ async function runTests() {
   };
 
   for (const [dirName, displayName] of Object.entries(workflowDirs)) {
+    const skillMdPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/SKILL.md`);
+    const workflowMdPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/workflow.md`);
     const workflowYamlPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/workflow.yaml`);
+
+    if (await pathExists(skillMdPath)) {
+      try {
+        const skillContent = await fs.readFile(skillMdPath, 'utf8');
+        assert(skillContent.includes('## On Activation'), `${dirName}/SKILL.md has On Activation section`);
+        assert(
+          skillContent.includes('Read `{skill-root}/workflow.md` and follow it exactly.'),
+          `${dirName}/SKILL.md loads workflow.md from {skill-root}`,
+        );
+        assert(
+          skillContent.includes('resolve them from `{skill-root}`, not from the workspace root'),
+          `${dirName}/SKILL.md explains workspace-root-safe relative path resolution`,
+        );
+        assert(!skillContent.includes('[workflow.md](workflow.md)'), `${dirName}/SKILL.md no longer uses a bare relative workflow link`);
+      } catch (error) {
+        assert(false, `${dirName}/SKILL.md validates`, error.message);
+      }
+    } else {
+      assert(false, `${dirName}/SKILL.md exists`, `src/workflows/testarch/${dirName}/SKILL.md not found`);
+    }
+
+    if (await pathExists(workflowMdPath)) {
+      try {
+        const workflowContent = await fs.readFile(workflowMdPath, 'utf8');
+        assert(workflowContent.includes('## PATH RESOLUTION'), `${dirName}/workflow.md documents path resolution`);
+        assert(
+          workflowContent.includes(
+            'Resolve sibling workflow files such as `instructions.md`, `checklist.md`, `steps-c/...`, `steps-e/...`, `steps-v/...`, and templates from `{skill-root}`, not from the workspace root.',
+          ),
+          `${dirName}/workflow.md explains sibling workflow path resolution`,
+        );
+        assert(/\{skill-root\}\/steps-[cev]\//.test(workflowContent), `${dirName}/workflow.md routes first step from {skill-root}`);
+      } catch (error) {
+        assert(false, `${dirName}/workflow.md validates`, error.message);
+      }
+    } else {
+      assert(false, `${dirName}/workflow.md exists`, `src/workflows/testarch/${dirName}/workflow.md not found`);
+    }
 
     if (await pathExists(workflowYamlPath)) {
       try {
