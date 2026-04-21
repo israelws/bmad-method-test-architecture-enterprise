@@ -228,7 +228,7 @@ See [Extend TEA with Custom Workflows](../how-to/customization/extend-tea-with-c
 
 ```text
 python3 scripts/resolve_customization.py ...
-can't open file 'C:\\path\\to\\workspace\\scripts\\resolve_customization.py': [Errno 2] No such file or directory
+can't open file 'C:\path\to\workspace\scripts\resolve_customization.py': [Errno 2] No such file or directory
 ```
 
 **Cause**: GitHub Copilot executes skill commands from the **workspace root**, not from the installed skill folder under `.github/skills/`.
