@@ -193,7 +193,7 @@ Write the selected pipeline configuration to the resolved output path from step 
 
 - `pact-consumer-framework-setup.md` — determinism gate, `jq -S` publish normalization, 1:1 local/CI parity, full consumer CI workflow template
 - `pactjs-utils-consumer-helpers.md` — one-interaction-per-`it()` determinism rule
-- `pactjs-utils-provider-verifier.md` — `buildVerifierOptions`, broker config, breaking change patterns, **provider vitest `pool: 'forks'` + `singleFork: true`** for CI provider verification
+- `pactjs-utils-provider-verifier.md` — `buildVerifierOptions`, broker config, breaking change patterns, **vitest `pool: 'forks'` + `singleFork: true`** (same rule applies to consumer AND provider configs)
 - `pactjs-utils-request-filter.md` — `createRequestFilter` auth injection patterns for CI pipeline auth setup
 - `pact-broker-webhooks.md` — PactFlow → GitHub webhook auth (dedicated machine user, classic PAT with `repo` scope, PactFlow-stored secret), rotation runbook, and staleness monitoring options (the webhook is what makes `can-i-deploy` succeed end-to-end)
 
@@ -214,13 +214,13 @@ env:
 1. **Consumer test (determinism gate) + publish**: Run consumer contract tests as a determinism gate, then publish pacts to broker — each step calls the same `npm run` script a developer runs locally (1:1 parity)
    - `npm run test:pact:consumer` — **this is the determinism gate**: runs `scripts/check-pact-determinism.sh` which invokes the inner `test:pact:consumer:run` N times (default 3) and fails if generated pact JSON is not byte-stable across runs. Never fold this into the publish step — keep it as its own visible CI step so failures are attributable to generation vs publish.
    - `npm run publish:pact` — publishes to the broker; internally normalizes interactions via `jq -S '.interactions |= sort_by(...)'` as defense-in-depth against any ordering drift that slips past the gate.
-   - Ensure `jq` is available on the runner (default on `ubuntu-latest`).
+   - Ensure `jq` is available on the runner. It is preinstalled on GitHub `ubuntu-latest`; for other runner images or self-hosted runners, add an explicit install step (e.g., `apt-get install -y jq` or `brew install jq`) before any contract-test or publish command.
    - Only publish on PR and main branch pushes.
 
 2. **Provider verification**: Run provider verification against published pacts
    - `npm run test:pact:provider:remote:contract`
    - `buildVerifierOptions` auto-reads `PACT_BROKER_BASE_URL`, `PACT_BROKER_TOKEN`, `GITHUB_SHA`, `GITHUB_BRANCH`
-   - Provider Vitest config (`vitest.config.contract.ts`) **must** use `pool: 'forks'` + `poolOptions.forks.singleFork: true` (see `pactjs-utils-provider-verifier.md` Example 7) — required for message providers and any multi-file provider contract suite to keep Pact Rust FFI state coherent.
+   - Provider Vitest config (`vitest.config.contract.ts`) **must** use `pool: 'forks'` + `poolOptions.forks.singleFork: true` (see `pactjs-utils-provider-verifier.md` Example 7) — required for message providers and any multi-file provider contract suite to keep Pact Rust FFI state coherent. The SAME config is required on the consumer side (`vitest.config.pact.ts`) alongside `fileParallelism: false` — see `pact-consumer-framework-setup.md` Example 2.
    - Verification results published to broker when `CI=true`
 
 3. **Can-I-Deploy gate**: Block deployment if contracts are incompatible

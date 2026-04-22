@@ -260,7 +260,7 @@ it.each([
 
 **Key Points**:
 
-- **This rule is orthogonal to `fileParallelism: false`** — both are required. `fileParallelism: false` prevents parallel workers from racing on the shared pact JSON; one-interaction-per-`it()` prevents the FFI from dropping interactions within a single worker.
+- **This rule stacks with two other MANDATORY vitest settings**: `fileParallelism: false` AND `pool: 'forks'` with `poolOptions.forks.singleFork: true`. All three are required and address different failure modes — `fileParallelism: false` prevents parallel workers from racing on the shared pact JSON; `pool: 'forks'` + `singleFork: true` prevents the Pact Rust FFI from leaking state across files (manifests as "request was expected but not received" flakes on Linux CI only); one-interaction-per-`it()` prevents the FFI from dropping interactions within a single test body.
 - Symptom of violating this rule: the pact file is byte-different between otherwise-identical runs; `scripts/check-pact-determinism.sh` flags drift; PactFlow rejects a republish with `Cannot change pact content`.
 - The rule applies to both HTTP consumer pacts (`PactV4`) and message consumer pacts (`MessageConsumerPact`).
 - See `pact-consumer-framework-setup.md` Example 10 for the determinism gate that automatically catches violations of this rule.
@@ -283,8 +283,8 @@ it.each([
 ## Related Fragments
 
 - `pactjs-utils-overview.md` — installation, decision tree, design philosophy
-- `pactjs-utils-provider-verifier.md` — provider-side state handler implementation, **provider vitest `pool: 'forks'` + `singleFork: true`**
-- `pact-consumer-framework-setup.md` — Vitest `fileParallelism: false` config, determinism gate (Example 10), and CI wiring
+- `pactjs-utils-provider-verifier.md` — provider-side state handler implementation; same `pool: 'forks'` + `singleFork: true` rule as consumer
+- `pact-consumer-framework-setup.md` — Vitest `fileParallelism: false` + `pool: 'forks'` + `singleFork: true` config, determinism gate (Example 10), and CI wiring
 - `contract-testing.md` — foundational patterns with raw Pact.js
 
 ## Anti-Patterns

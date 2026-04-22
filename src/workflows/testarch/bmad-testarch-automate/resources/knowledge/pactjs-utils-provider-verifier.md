@@ -255,8 +255,8 @@ export default defineConfig({
 - **Required for message providers** (`buildMessageVerifierOptions`) — the message-handle FFI state is almost guaranteed to corrupt under parallel workers.
 - **Required for HTTP providers with multiple contract test files** — even if each file works in isolation, running them together in parallel produces intermittent failures.
 - `pool: 'forks'` (rather than `threads`) + `singleFork: true` is the exact combo that keeps all verifier runs in a single child process with a single FFI instance.
-- If you only have one provider contract test file **and** it's HTTP-only, you can technically skip this — but setting it always is the safer default for when the suite grows.
-- This is the provider-side equivalent of `fileParallelism: false` on the consumer side (see `pact-consumer-framework-setup.md` Example 2). Both stem from the same root cause: Pact FFI state is not safe across parallel workers.
+- Treat `pool: 'forks'` + `singleFork: true` as the required baseline for all provider suites, including single-file HTTP-only ones. A suite that works today with one file will flake the moment a second file is added, and removing the setting later introduces a regression window.
+- **The same `pool: 'forks'` + `singleFork: true` rule applies on the consumer side.** Consumer `vitest.config.pact.ts` sets it alongside `fileParallelism: false` — see `pact-consumer-framework-setup.md` Example 2. The rule is needed on either side wherever more than one pact test file exists per consumer+provider pair.
 - Use a dedicated `vitest.config.contract.ts` so unit tests still get full parallelism — only contract tests pay the serialization cost.
 - Related `package.json` entry:
 

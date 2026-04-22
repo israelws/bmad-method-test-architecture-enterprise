@@ -58,6 +58,8 @@ scripts/
 
 ```typescript
 // vitest.config.pact.ts
+// See pact-consumer-framework-setup.md Example 2 "Key Points" for rationale on
+// fileParallelism + pool:forks + singleFork. Do not remove those three settings.
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -65,19 +67,20 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/contract/**/*.pacttest.ts'],
     testTimeout: 30000,
-    // MANDATORY: PactV4 writes to a shared JSON pact file per consumer/provider pair.
-    // Vitest's default parallel file workers race on this file and silently corrupt interactions,
-    // producing PactFlow "Cannot change pact content for already published pact" errors on republish.
-    // This is the single biggest root-cause of CDC flakes — do NOT remove even if the suite grows slow.
     fileParallelism: false,
+    pool: 'forks',
+    poolOptions: { forks: { singleFork: true } },
   },
 });
 ```
 
 **Key Points**:
 
-- **`fileParallelism: false` is MANDATORY** — it is the primary defense against non-deterministic pact generation. Without it, parallel workers race on the shared pact JSON file and corrupt interactions. Symptom: local runs pass, CI randomly fails with `Cannot change pact content for already published pact`. Never remove this line. See Example 10 for the determinism gate that enforces byte-stability across re-runs.
-- Do NOT add `pool`, `poolOptions`, `setupFiles`, `coverage`, or other settings from the unit test config (provider verification has different needs — see `pactjs-utils-provider-verifier.md`)
+- **`fileParallelism: false` is required** — primary defense against non-deterministic pact generation. Without it, parallel workers race on the shared pact JSON file and corrupt interactions. Symptom: local runs pass, CI randomly fails with `Cannot change pact content for already published pact`. See Example 10 for the determinism gate that enforces byte-stability across re-runs.
+- **`pool: 'forks'` + `singleFork: true` is required for multi-file consumer suites** — same config the provider side uses (`pactjs-utils-provider-verifier.md` Example 7). Best current understanding: the `@pact-foundation/pact` napi-rs binding is not robust across Vitest worker threads sharing a process; with the default threads pool (Vitest v1) and multiple `.pacttest.ts` files on the same consumer+provider pair, we observed reproducible "request was expected but not received" flakes on Linux CI only. `singleFork: true` serializes every pact file into one forked subprocess and eliminated the flake on two repos (`pactjs-utils`, `seon-mcp-server`). Vitest v2+ defaults to `forks`, but set the pool explicitly so the contract does not drift with Vitest version bumps.
+- **Single-file consumer suites** (one `.pacttest.ts` per consumer+provider pair) have not been observed to flake under default threads pool, because FFI state is not shared across files when there is only one file. Adding `pool: 'forks'` is still recommended — it future-proofs you the moment a second file is added — but a suite passing today with only `fileParallelism: false` is not broken.
+- **Interacting settings**: leave `isolate` at its default (`true`). Do NOT set `sequence.concurrent: true`, `maxConcurrency > 1`, or `maxWorkers > 1` in this config — they defeat the serialization this rule relies on. `hookTimeout` may be raised if mock-server startup is slow, but keep `testTimeout` ≥ `hookTimeout`.
+- Do NOT add `setupFiles`, `coverage`, or other settings from the unit test config
 - Keep it minimal — Pact tests run in Node environment with extended timeout
 - 30 second timeout accommodates Pact mock server startup and interaction verification
 - Use a dedicated config file (`vitest.config.pact.ts`), not the main vitest config
@@ -642,7 +645,7 @@ pact-logs/
 set -euo pipefail
 
 CMD="${1:?usage: ./scripts/check-pact-determinism.sh \"<cmd>\" [runs] [pact-dir]}"
-RUNS="${2:-3}"
+RUNS="${PACT_DETERMINISM_RUNS:-${2:-3}}"
 PACT_DIR="${3:-./pacts}"
 
 TMP_DIR="$(mktemp -d)"
@@ -688,6 +691,7 @@ if [ "$FAIL" -ne 0 ]; then
   echo "Pact output is non-deterministic across $RUNS runs. Likely causes:"
   echo "  • multiple .addInteraction() chained in a single it() block (PactV4 FFI drops one non-deterministically)"
   echo "  • fileParallelism: true in vitest.config.pact.ts (workers race on shared pact JSON)"
+  echo "  • missing pool: 'forks' + singleFork: true (threads pool shares FFI state across files on Linux CI)"
   echo "  • Date / random matchers that don't lock a stable example value"
   echo "  • provider state params mutating between runs (e.g. Date.now())"
   exit 1
@@ -711,7 +715,8 @@ echo "✅ Pact output is byte-stable across $RUNS runs."
 
 Before presenting the consumer CDC framework to the user, verify:
 
-- [ ] `vitest.config.pact.ts` is minimal **and sets `fileParallelism: false`** (required — prevents shared pact JSON corruption from parallel workers)
+- [ ] `vitest.config.pact.ts` is minimal **and sets `fileParallelism: false` AND `pool: 'forks'` with `poolOptions.forks.singleFork: true`** (`fileParallelism: false` prevents shared pact JSON corruption from parallel workers; forks + `singleFork: true` eliminates the Linux-CI "request was expected but not received" flake observed once a second `.pacttest.ts` is added — see Example 2 Key Points for evidence, mechanism qualifier, and single-file exception)
+- [ ] `vitest.config.pact.ts` does NOT set `sequence.concurrent: true`, `maxConcurrency > 1`, `maxWorkers > 1`, or `isolate: false` — all four defeat the serialization the rule relies on
 - [ ] `package.json` splits `test:pact:consumer` (gated determinism runner) and `test:pact:consumer:run` (inner single-pass command)
 - [ ] `scripts/check-pact-determinism.sh` is present, hashes via `jq -S` + `sort_by`, defaults to 3 runs, and is the body of the `test:pact:consumer` script
 - [ ] `scripts/publish-pact.sh` normalizes interactions with `jq -S '.interactions |= sort_by(.description, (.providerStates[0].name // ""), .request.method, .request.path)'` before the `pact-broker publish` call (defense-in-depth alongside the gate)
@@ -746,7 +751,7 @@ Before presenting the consumer CDC framework to the user, verify:
 
 - `pactjs-utils-overview.md` — Library decision tree and installation
 - `pactjs-utils-consumer-helpers.md` — `createProviderState`, `toJsonMap`, `setJsonContent`, `setJsonBody`, **one-interaction-per-`it()` rule**
-- `pactjs-utils-provider-verifier.md` — Provider-side verification patterns, **provider vitest `pool: 'forks'` + `singleFork: true`**
+- `pactjs-utils-provider-verifier.md` — Provider-side verification patterns; consumer and provider BOTH require `pool: 'forks'` + `singleFork: true` — same FFI-safety rule applies on both sides
 - `pactjs-utils-request-filter.md` — Auth injection for provider verification
 - `pact-broker-webhooks.md` — PactFlow → GitHub webhook auth pattern (dedicated user, classic PAT, PactFlow secret) and staleness monitoring
 - `contract-testing.md` — Foundational CDC patterns and resilience coverage

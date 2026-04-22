@@ -90,7 +90,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Check out the SHA the consumer pact was published against, not whatever is on main.
+          # Check out the provider version known to the broker — this is the provider SHA PactFlow wants verified.
           ref: ${{ github.event.client_payload.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
@@ -107,7 +107,7 @@ jobs:
 
 - `repository_dispatch` is the event type emitted by GitHub when the webhook's REST call hits `/repos/<org>/<repo>/dispatches`.
 - The `types` filter must match the webhook's `event_type` (`contract_requiring_verification_published` here).
-- Checking out the consumer's reported SHA ensures verification runs against the correct provider commit, not "whatever main is right now".
+- Checking out the provider version known to the broker (`providerVersionNumber`) ensures verification runs against the exact provider commit PactFlow registered — not whatever is on main.
 - `PACT_PAYLOAD_URL` makes `buildVerifierOptions` verify only the triggering pact (see `pactjs-utils-provider-verifier.md` Example 1).
 
 ### Example 3: Secret Rotation Runbook
