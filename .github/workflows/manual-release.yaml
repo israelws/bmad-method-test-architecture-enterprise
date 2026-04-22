@@ -38,11 +38,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests and validation
+      - name: Verify npm credentials
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          npm run validate:schemas
-          npm run format:check
-          npm run lint
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN secret is not configured." >&2
+            exit 1
+          fi
+
+      - name: Run tests and validation
+        run: npm test
 
       - name: Configure Git
         run: |
@@ -94,13 +100,14 @@ jobs:
           git add package.json package-lock.json .claude-plugin/marketplace.json
           git commit -m "release: bump to v${{ steps.version.outputs.new_version }}"
 
-      - name: Verify npm credentials
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Create and push tag
         run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "NPM_TOKEN secret is not configured." >&2
-            exit 1
+          # Check if tag already exists
+          if git rev-parse "v${{ steps.version.outputs.new_version }}" >/dev/null 2>&1; then
+            echo "Tag v${{ steps.version.outputs.new_version }} already exists, skipping tag creation"
+          else
+            git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}"
+            git push origin "v${{ steps.version.outputs.new_version }}"
           fi
 
       - name: Publish to npm
@@ -179,16 +186,6 @@ jobs:
           echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
           cat release_notes.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create and push tag
-        run: |
-          # Check if tag already exists
-          if git rev-parse "v${{ steps.version.outputs.new_version }}" >/dev/null 2>&1; then
-            echo "Tag v${{ steps.version.outputs.new_version }} already exists, skipping tag creation"
-          else
-            git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release v${{ steps.version.outputs.new_version }}"
-            git push origin "v${{ steps.version.outputs.new_version }}"
-          fi
 
       - name: Push changes to release branch
         run: |

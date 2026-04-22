@@ -229,8 +229,11 @@ TEA uses an automated release workflow that handles versioning, metadata sync, t
    # Check package.json settings
    cat package.json | grep -A 3 "publishConfig"
    # Should show: "access": "public"
-   grep '"private"' package.json || echo '"private" is not set'
-   # Package must not be marked "private": true
+   if grep -Eq '"private"[[:space:]]*:[[:space:]]*true' package.json; then
+     echo '❌ package.json must not set "private": true'
+   else
+     echo '✅ package.json is publishable ("private": true not present)'
+   fi
    ```
 
 ### Release Process
@@ -269,7 +272,7 @@ npm run release:major
 
 The workflow performs these steps:
 
-1. ✅ **Validation**: Runs schema validation, linting, formatting, and release metadata checks
+1. ✅ **Validation**: Runs the full `npm test` suite, including schema checks, install tests, knowledge checks, linting, markdown linting, formatting, and release metadata validation
 2. ✅ **Version Bump**: Updates `package.json`, `package-lock.json`, and `.claude-plugin/marketplace.json`
    - `beta`: 1.12.3 → 1.12.4-beta.0
    - `alpha`: 1.12.3 → 1.12.4-alpha.0

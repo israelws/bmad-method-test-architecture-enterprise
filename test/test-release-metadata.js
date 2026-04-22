@@ -17,9 +17,19 @@ const packageJsonPath = path.join(projectRoot, 'package.json');
 const packageLockPath = path.join(projectRoot, 'package-lock.json');
 const marketplacePath = path.join(projectRoot, '.claude-plugin', 'marketplace.json');
 
-const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-const packageLock = JSON.parse(fs.readFileSync(packageLockPath, 'utf8'));
-const marketplace = JSON.parse(fs.readFileSync(marketplacePath, 'utf8'));
+function readJson(filePath, label) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (error) {
+    console.error(`Release metadata validation failed: unable to read ${label} at ${filePath}`);
+    console.error(error.message);
+    process.exit(1);
+  }
+}
+
+const packageJson = readJson(packageJsonPath, 'package.json');
+const packageLock = readJson(packageLockPath, 'package-lock.json');
+const marketplace = readJson(marketplacePath, '.claude-plugin/marketplace.json');
 const marketplacePlugin = (marketplace.plugins || []).find((plugin) => plugin && plugin.name === packageJson.name);
 
 const errors = [];
