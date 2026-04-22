@@ -212,9 +212,11 @@ Read `{config_source}` and use `{knowledgeIndex}` to load fragments based on `co
 
 **If Pact.js Utils enabled** (`config.tea_use_pactjs_utils`):
 
-- `pact-consumer-framework-setup.md` (CRITICAL: load this for directory structure, scripts, CI workflow, and PactV4 patterns)
-- `pactjs-utils-overview.md`, `pactjs-utils-consumer-helpers.md`, `pactjs-utils-provider-verifier.md`, `pactjs-utils-request-filter.md`, `contract-testing.md`
+- `pact-consumer-framework-setup.md` (CRITICAL: load this for directory structure, scripts, CI workflow, and PactV4 patterns — includes `fileParallelism: false`, determinism gate, and `jq` publish normalization)
+- `pactjs-utils-overview.md`, `pactjs-utils-consumer-helpers.md` (one-interaction-per-`it()` rule), `pactjs-utils-provider-verifier.md` (provider vitest `pool: 'forks'` + `singleFork`), `pactjs-utils-request-filter.md`, `contract-testing.md`
+- `pact-broker-webhooks.md` — when scaffolding the provider repo and any CI step that depends on `can-i-deploy`
 - Recommend installing `@seontechnologies/pactjs-utils` and `@pact-foundation/pact`
+- Ensure `jq` is available on CI runners (default on `ubuntu-latest`; document `brew install jq` for macOS dev machines) — required by `scripts/check-pact-determinism.sh` and `scripts/publish-pact.sh`
 
 **If Pact.js Utils disabled but contract testing relevant:**
 
@@ -264,10 +266,12 @@ Create helpers for:
 
 Create Node.js/TypeScript contract test samples per `pact-consumer-framework-setup.md`:
 
-- **Consumer test**: Example using PactV4 `addInteraction()` builder + `createProviderState` + real consumer code with URL injection (`.pacttest.ts` extension)
+- **Consumer test**: Example using PactV4 `addInteraction()` builder + `createProviderState` + real consumer code with URL injection (`.pacttest.ts` extension). **One `addInteraction()` per `it()` block** — never chain multiple interactions in a single test (PactV4 FFI drops them non-deterministically; see `pactjs-utils-consumer-helpers.md` Example 6).
 - **Support files**: Pact config factory (`pact-config.ts`), provider state factories (`provider-states.ts`), local consumer-helpers shim (`consumer-helpers.ts`)
-- **Vitest config**: Minimal `vitest.config.pact.ts` (do NOT copy settings from unit config)
-- **Shell scripts**: `env-setup.sh`, `publish-pact.sh`, `can-i-deploy.sh`, `record-deployment.sh` in `scripts/`
+- **Vitest config (consumer)**: Minimal `vitest.config.pact.ts` with **`fileParallelism: false`** (required — see `pact-consumer-framework-setup.md` Example 2). Do NOT copy settings from unit config.
+- **Vitest config (provider)**: `vitest.config.contract.ts` with **`pool: 'forks'` + `poolOptions.forks.singleFork: true`** when provider verification suites exist (required for message providers and multi-file HTTP providers; see `pactjs-utils-provider-verifier.md` Example 7).
+- **Shell scripts**: `env-setup.sh`, `check-pact-determinism.sh` (primary defense against non-deterministic pact generation), `publish-pact.sh` (with `jq -S` interaction sort normalization), `can-i-deploy.sh`, `record-deployment.sh` in `scripts/`
+- **package.json scripts**: Split `test:pact:consumer` (determinism gate — runs `check-pact-determinism.sh` with 3 runs) and `test:pact:consumer:run` (inner single-pass vitest invocation). CI and local both call `npm run test:pact:consumer` for 1:1 parity.
 - **CI workflow**: `contract-test-consumer.yml` with detect-breaking-change action
 - **package.json scripts**: `test:pact:consumer`, `publish:pact`, `can:i:deploy:consumer`, `record:consumer:deployment`
 - **.gitignore**: Add `/pacts/` and `pact-logs/`

@@ -46,6 +46,10 @@ This is an **isolated subagent** running in parallel with other quality dimensio
 - External API calls without mocking
 - File system operations on random paths
 - Database queries with non-deterministic ordering
+- **PactV4 consumer tests: multiple `pact.addInteraction()` in a single `it()` block** — the Rust FFI non-deterministically drops interactions (see `pactjs-utils-consumer-helpers.md` Example 6). Flag any `.pacttest.ts` file where a single `it()`/`test()` contains more than one `addInteraction()` chain.
+- **PactV4 consumer Vitest config missing `fileParallelism: false`** in `vitest.config.pact.ts` — parallel workers race on the shared pact JSON file (see `pact-consumer-framework-setup.md` Example 2).
+- **Pact provider Vitest config missing `pool: 'forks'` + `poolOptions.forks.singleFork: true`** in `vitest.config.contract.ts` for multi-file provider suites (especially message providers) — parallel workers corrupt the Pact Rust FFI state (see `pactjs-utils-provider-verifier.md` Example 7).
+- **Consumer repo lacks a determinism gate** — if `tea_use_pactjs_utils` is enabled, flag any `package.json` whose `test:pact:consumer` script does not run `scripts/check-pact-determinism.sh` (see `pact-consumer-framework-setup.md` Example 10).
 
 **MEDIUM SEVERITY Violations**:
 

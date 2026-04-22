@@ -65,13 +65,19 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/contract/**/*.pacttest.ts'],
     testTimeout: 30000,
+    // MANDATORY: PactV4 writes to a shared JSON pact file per consumer/provider pair.
+    // Vitest's default parallel file workers race on this file and silently corrupt interactions,
+    // producing PactFlow "Cannot change pact content for already published pact" errors on republish.
+    // This is the single biggest root-cause of CDC flakes — do NOT remove even if the suite grows slow.
+    fileParallelism: false,
   },
 });
 ```
 
 **Key Points**:
 
-- Do NOT add `pool`, `poolOptions`, `setupFiles`, `coverage`, or other settings from the unit test config
+- **`fileParallelism: false` is MANDATORY** — it is the primary defense against non-deterministic pact generation. Without it, parallel workers race on the shared pact JSON file and corrupt interactions. Symptom: local runs pass, CI randomly fails with `Cannot change pact content for already published pact`. Never remove this line. See Example 10 for the determinism gate that enforces byte-stability across re-runs.
+- Do NOT add `pool`, `poolOptions`, `setupFiles`, `coverage`, or other settings from the unit test config (provider verification has different needs — see `pactjs-utils-provider-verifier.md`)
 - Keep it minimal — Pact tests run in Node environment with extended timeout
 - 30 second timeout accommodates Pact mock server startup and interaction verification
 - Use a dedicated config file (`vitest.config.pact.ts`), not the main vitest config
@@ -87,7 +93,8 @@ export default defineConfig({
 ```json
 {
   "scripts": {
-    "test:pact:consumer": "vitest run --config vitest.config.pact.ts",
+    "test:pact:consumer": "./scripts/check-pact-determinism.sh 'npm run test:pact:consumer:run' 3 ./pacts",
+    "test:pact:consumer:run": "vitest run --config vitest.config.pact.ts",
     "publish:pact": ". ./scripts/env-setup.sh && ./scripts/publish-pact.sh",
     "can:i:deploy:consumer": ". ./scripts/env-setup.sh && PACTICIPANT=<service-name> ./scripts/can-i-deploy.sh",
     "record:consumer:deployment": ". ./scripts/env-setup.sh && PACTICIPANT=<service-name> ./scripts/record-deployment.sh"
@@ -99,6 +106,8 @@ Replace `<service-name>` with the consumer's pacticipant name (e.g., `my-fronten
 
 **Key Points**:
 
+- **`test:pact:consumer` IS the determinism gate** — it runs the inner command 3× and fails if pact output is not byte-stable. This is the command CI and developers run before pushing. See Example 10 for the `check-pact-determinism.sh` script itself.
+- **`test:pact:consumer:run` is the fast inner command** for TDD loops (a single pass of the suite, no gate). Developers can iterate with this; CI always goes through the outer gated script.
 - Use colon-separated naming: `test:pact:consumer`, NOT `test:contract` or `test:contract:consumer`
 - Broker scripts source `env-setup.sh` inline in package.json (`. ./scripts/env-setup.sh && ...`)
 - `PACTICIPANT` is set per-script invocation, not globally
@@ -127,19 +136,33 @@ export GITHUB_SHA="${GITHUB_SHA:-$(git rev-parse --short HEAD)}"
 export GITHUB_BRANCH="${GITHUB_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}"
 ```
 
-#### `scripts/publish-pact.sh` — Publish Pacts to Broker
+#### `scripts/publish-pact.sh` — Publish Pacts to Broker (with defense-in-depth normalization)
 
 ```bash
 #!/bin/bash
-# Publish generated pact files to PactFlow/Pact Broker
+# Publish generated pact files to PactFlow/Pact Broker.
 #
-# Requires: PACT_BROKER_BASE_URL, PACT_BROKER_TOKEN, GITHUB_SHA, GITHUB_BRANCH
+# Before publish, normalize each pact JSON: sort interactions by (description, provider state name,
+# method, path) and sort object keys via `jq -S`. This gives byte-stable output to the broker even
+# if the PactV4 generator produces ordering drift between runs. Paired with scripts/check-pact-determinism.sh
+# as defense-in-depth — the gate catches drift pre-publish; normalization ensures "Cannot change pact
+# content" from PactFlow never fires on ordering-only changes that slip past the gate.
+#
+# Requires: PACT_BROKER_BASE_URL, PACT_BROKER_TOKEN, GITHUB_SHA, GITHUB_BRANCH, jq
 # -e: exit on error  -u: error on undefined vars  -o pipefail: fail if any pipe segment fails
 set -euo pipefail
 
 . ./scripts/env-setup.sh
 
 PACT_DIR="./pacts"
+
+# Defense-in-depth: normalize interaction order for byte-stable publishes.
+for f in "$PACT_DIR"/*.json; do
+  tmp="$(mktemp)"
+  jq -S '.interactions |= sort_by(.description, (.providerStates[0].name // ""), .request.method, .request.path)' \
+     "$f" > "$tmp"
+  mv "$tmp" "$f"
+done
 
 pact-broker publish "$PACT_DIR" \
     --consumer-app-version="$GITHUB_SHA" \
@@ -203,6 +226,7 @@ fi
 - Use `PACTICIPANT` env var (required via `${PACTICIPANT:?...}`), not hardcoded service names
 - `can-i-deploy` includes `--retry-while-unknown=10 --retry-interval=30` (waits for provider verification)
 - `record-deployment` has branch guard (only records on main/master)
+- **`publish-pact.sh` normalizes interactions with `jq -S` + `sort_by(...)` before publishing** — defense-in-depth alongside the determinism gate (Example 10). The gate catches drift; normalization ensures byte-stable payload to the broker regardless of generator quirks. Keep both; they protect against different failure modes.
 - Do NOT invent custom env vars like `PACT_CONSUMER_VERSION` or `PACT_BREAKING_CHANGE` in scripts — those are handled by `env-setup.sh` and the CI detect-breaking-change action respectively
 
 ---
@@ -249,11 +273,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # (1) Generate pact files
-      - name: Run consumer contract tests
+      # (1) Generate pact files — runs the determinism gate (3 runs + byte-stable check via jq)
+      - name: Consumer pact tests (determinism gate)
         run: npm run test:pact:consumer
 
-      # (2) Publish pacts to broker
+      # (2) Publish pacts to broker (publish-pact.sh also normalizes interaction order as defense-in-depth)
       - name: Publish pacts to PactFlow
         run: npm run publish:pact
 
@@ -274,6 +298,8 @@ jobs:
 
 **Key Points**:
 
+- **1:1 local/CI parity is a hard rule**: every CI step is `npm run <same-name-a-dev-uses>`. Never let CI invoke `vitest` or `pact-broker` directly — that divergence is how "works on my machine" slips in. The determinism gate, publish, can-i-deploy, and record-deployment are all the same commands a developer runs locally.
+- **The determinism gate is its own visible step, not a side-effect of publish.** A failing gate must be debuggable from the CI log without re-running. Do not fold it into a `prepublish:pact` hook — folding hides the failure inside a publish log and makes attribution harder.
 - **Workflow-level `env` block** for broker secrets and git vars — not per-step
 - **`detect-breaking-change` step** runs before install to set `PACT_BREAKING_CHANGE` env var
 - **Step numbering skips (3)** — step 3 is the webhook-triggered provider verification (happens externally)
@@ -596,12 +622,100 @@ pact-logs/
 
 ---
 
+### Example 10: Determinism Gate Script (Primary Defense)
+
+**Context**: Even with `fileParallelism: false` (Example 2) and one-interaction-per-`it()` (see `pactjs-utils-consumer-helpers.md`), the PactV4 Rust FFI layer can occasionally produce byte-different pact JSON between runs — interaction ordering drift, nested matcher serialization quirks, or `Date` / random-value matchers that weren't locked down. This causes PactFlow to reject re-publishes of the same consumer SHA with `Cannot change pact content for already published pact`. The determinism gate runs the consumer suite N times locally and in CI, hashes the normalized pact files, and fails fast if drift is detected — before any publish is attempted.
+
+**Implementation**:
+
+#### `scripts/check-pact-determinism.sh`
+
+```bash
+#!/bin/bash
+# Run a pact consumer command N times and fail if the generated pact files are not byte-stable.
+# Primary defense against PactV4 non-deterministic output.
+#
+# Usage:  ./scripts/check-pact-determinism.sh "<cmd>" [runs] [pact-dir]
+# Example: ./scripts/check-pact-determinism.sh 'npm run test:pact:consumer:run' 3 ./pacts
+#
+# Requires: jq installed on the runner (ubuntu-latest has it; macOS users need `brew install jq`).
+set -euo pipefail
+
+CMD="${1:?usage: ./scripts/check-pact-determinism.sh \"<cmd>\" [runs] [pact-dir]}"
+RUNS="${2:-3}"
+PACT_DIR="${3:-./pacts}"
+
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+hash_pact_file() {
+  # Sort interactions by (description, first provider state name, method, path), sort keys with -S.
+  # The sorted output is what we hash — so ordering-only drift does NOT count as non-determinism here.
+  # (The gate catches deeper drift; ordering drift is handled by publish-pact.sh normalization.)
+  jq -S '.interactions |= sort_by(.description, (.providerStates[0].name // ""), .request.method, .request.path)' "$1" \
+    | shasum -a 256 | awk '{print $1}'
+}
+
+for run in $(seq 1 "$RUNS"); do
+  echo "→ determinism run $run/$RUNS"
+  rm -f "$PACT_DIR"/*.json 2>/dev/null || true
+  eval "$CMD" >"$TMP_DIR/run-$run.log" 2>&1 || {
+    echo "❌ run $run failed — dumping log:"
+    cat "$TMP_DIR/run-$run.log"
+    exit 1
+  }
+  : > "$TMP_DIR/run-$run.hashes"
+  for f in "$PACT_DIR"/*.json; do
+    [ -f "$f" ] || continue
+    printf '%s  %s\n' "$(hash_pact_file "$f")" "$(basename "$f")" >> "$TMP_DIR/run-$run.hashes"
+  done
+  sort -o "$TMP_DIR/run-$run.hashes" "$TMP_DIR/run-$run.hashes"
+done
+
+# Compare every subsequent run against run 1.
+FAIL=0
+for run in $(seq 2 "$RUNS"); do
+  if ! diff -q "$TMP_DIR/run-1.hashes" "$TMP_DIR/run-$run.hashes" >/dev/null; then
+    FAIL=1
+    echo ""
+    echo "❌ Pact output differs between run 1 and run $run:"
+    diff "$TMP_DIR/run-1.hashes" "$TMP_DIR/run-$run.hashes" || true
+  fi
+done
+
+if [ "$FAIL" -ne 0 ]; then
+  echo ""
+  echo "Pact output is non-deterministic across $RUNS runs. Likely causes:"
+  echo "  • multiple .addInteraction() chained in a single it() block (PactV4 FFI drops one non-deterministically)"
+  echo "  • fileParallelism: true in vitest.config.pact.ts (workers race on shared pact JSON)"
+  echo "  • Date / random matchers that don't lock a stable example value"
+  echo "  • provider state params mutating between runs (e.g. Date.now())"
+  exit 1
+fi
+
+echo "✅ Pact output is byte-stable across $RUNS runs."
+```
+
+**Key Points**:
+
+- **Wire this script into `test:pact:consumer`** (see Example 3). The outer script IS the gate; the inner `test:pact:consumer:run` is the single-pass command for TDD loops.
+- **Default 3 runs** is the sweet spot — 2 runs miss intermittent drops, >3 slows CI without catching more. Override with an env var or the positional arg if you're actively debugging a flake.
+- **Treat gate failures as a P0 bug, not a "retry until green" condition.** Find the source of non-determinism (chained `addInteraction`, unsorted interactions, Date-dependent matchers). Do not raise `RUNS` to 10 to mask the symptom.
+- **Requires `jq`** — installed by default on `ubuntu-latest`. For macOS local dev, document `brew install jq` in the project README.
+- **In CI, make this its own visible step** (see Example 5 step (1) naming). Do not fold into a `prepublish:pact` hook — that hides the failure inside a publish log.
+- **Defense-in-depth with `publish-pact.sh` normalization** (Example 4): the gate catches pre-publish drift; the publish-time `jq` sort ensures any ordering-only drift that slipped past the gate still produces a byte-stable payload to PactFlow.
+
+---
+
 ## Validation Checklist
 
 Before presenting the consumer CDC framework to the user, verify:
 
-- [ ] `vitest.config.pact.ts` is minimal (no pool/coverage/setup copied from unit config)
-- [ ] Script names match pactjs-utils (`test:pact:consumer`, `publish:pact`, `can:i:deploy:consumer`, `record:consumer:deployment`)
+- [ ] `vitest.config.pact.ts` is minimal **and sets `fileParallelism: false`** (required — prevents shared pact JSON corruption from parallel workers)
+- [ ] `package.json` splits `test:pact:consumer` (gated determinism runner) and `test:pact:consumer:run` (inner single-pass command)
+- [ ] `scripts/check-pact-determinism.sh` is present, hashes via `jq -S` + `sort_by`, defaults to 3 runs, and is the body of the `test:pact:consumer` script
+- [ ] `scripts/publish-pact.sh` normalizes interactions with `jq -S '.interactions |= sort_by(.description, (.providerStates[0].name // ""), .request.method, .request.path)'` before the `pact-broker publish` call (defense-in-depth alongside the gate)
+- [ ] Script names match pactjs-utils (`test:pact:consumer`, `test:pact:consumer:run`, `publish:pact`, `can:i:deploy:consumer`, `record:consumer:deployment`)
 - [ ] Scripts source `env-setup.sh` inline in package.json
 - [ ] Shell scripts use `pact-broker` not `npx pact-broker`
 - [ ] Shell scripts use `PACTICIPANT` env var pattern
@@ -611,6 +725,8 @@ Before presenting the consumer CDC framework to the user, verify:
 - [ ] CI workflow named `contract-test-consumer.yml`
 - [ ] CI has workflow-level env block (not per-step)
 - [ ] CI has `detect-breaking-change` step before install
+- [ ] CI step (1) is the determinism gate (calls `npm run test:pact:consumer`) — its own visible step, not folded into publish
+- [ ] CI steps are 1:1 with developer commands — every CI step calls `npm run <same-name>` a dev would run locally (no direct `vitest` or `pact-broker` invocation)
 - [ ] CI step numbering skips (3) — webhook-triggered provider verification
 - [ ] CI can-i-deploy has `PACT_BREAKING_CHANGE != 'true'` condition
 - [ ] CI has NO upload-artifact step
@@ -629,7 +745,8 @@ Before presenting the consumer CDC framework to the user, verify:
 ## Related Fragments
 
 - `pactjs-utils-overview.md` — Library decision tree and installation
-- `pactjs-utils-consumer-helpers.md` — `createProviderState`, `toJsonMap`, `setJsonContent`, and `setJsonBody` API details
-- `pactjs-utils-provider-verifier.md` — Provider-side verification patterns
+- `pactjs-utils-consumer-helpers.md` — `createProviderState`, `toJsonMap`, `setJsonContent`, `setJsonBody`, **one-interaction-per-`it()` rule**
+- `pactjs-utils-provider-verifier.md` — Provider-side verification patterns, **provider vitest `pool: 'forks'` + `singleFork: true`**
 - `pactjs-utils-request-filter.md` — Auth injection for provider verification
+- `pact-broker-webhooks.md` — PactFlow → GitHub webhook auth pattern (dedicated user, classic PAT, PactFlow secret) and staleness monitoring
 - `contract-testing.md` — Foundational CDC patterns and resilience coverage

@@ -1024,7 +1024,7 @@ Before implementing contract testing, verify:
 ## Integration Points
 
 - Used in workflows: `*automate` (integration test generation), `*ci` (contract CI setup)
-- Related fragments: `test-levels-framework.md`, `ci-burn-in.md`, `pact-consumer-framework-setup.md`
+- Related fragments: `test-levels-framework.md`, `ci-burn-in.md`, `pact-consumer-framework-setup.md`, `pactjs-utils-consumer-helpers.md` (PactV4 one-interaction-per-`it()` rule), `pactjs-utils-provider-verifier.md` (provider vitest `pool:forks` + `singleFork`), `pact-broker-webhooks.md` (PactFlow → GitHub webhook auth, PAT rotation, staleness monitoring)
 - Tools: Pact.js, Pact Broker (Pactflow or self-hosted), Pact CLI
 
 ---
@@ -1046,5 +1046,21 @@ When `tea_use_pactjs_utils` is enabled, the following utilities replace manual b
 | Inline no-op filter `(req, res, next) => next()`         | `noOpRequestFilter`                                                               | Pre-built pass-through for no-auth providers                          |
 
 See the `pactjs-utils-*.md` knowledge fragments for complete examples and anti-patterns.
+
+### PactV4 Determinism & FFI Safety (Mandatory)
+
+Three rules that together prevent the non-deterministic pact generation failures that otherwise cause `Cannot change pact content for already published pact` errors at PactFlow publish:
+
+1. **Consumer Vitest**: `fileParallelism: false` in `vitest.config.pact.ts` — see `pact-consumer-framework-setup.md` Example 2.
+2. **One `addInteraction()` per `it()` block** — see `pactjs-utils-consumer-helpers.md` Example 6.
+3. **Determinism gate** runs the consumer suite N times and fails on byte-different pact JSON before publish — see `pact-consumer-framework-setup.md` Example 10 (`scripts/check-pact-determinism.sh`).
+
+For provider suites:
+
+4. **Provider Vitest**: `pool: 'forks'` + `poolOptions.forks.singleFork: true` in `vitest.config.contract.ts` — see `pactjs-utils-provider-verifier.md` Example 7. Required for multi-file verification, especially message providers, to keep the Pact Rust FFI state coherent.
+
+### Webhook Auth & Staleness
+
+When `can-i-deploy` in a consumer repo times out with `There is no verified pact between <consumer> and the version of <provider> currently in <env>` — check the provider's PactFlow webhook. Silent failures from an expired/revoked GitHub PAT are the most common non-code cause of this symptom. See `pact-broker-webhooks.md` for the dedicated-machine-user pattern, classic-PAT-with-`repo`-scope rationale, rotation runbook, and staleness monitoring options.
 
 _Source: Pact consumer/provider sample repos, Murat contract testing blog, Pact official documentation, @seontechnologies/pactjs-utils library_
