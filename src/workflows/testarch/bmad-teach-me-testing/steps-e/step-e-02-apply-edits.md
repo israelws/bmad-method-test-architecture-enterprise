@@ -120,3 +120,9 @@ The teach-me-testing workflow has been updated.
 ✅ Edits applied to approved files only, changes validated, workflow integrity maintained, user informed of modifications.
 
 **Master Rule:** Show changes, get approval, apply edits, validate integrity.
+
+## On Complete
+
+Run: `python3 {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --key workflow.on_complete`
+
+If the resolved `workflow.on_complete` is non-empty, follow it as the final terminal instruction before exiting.

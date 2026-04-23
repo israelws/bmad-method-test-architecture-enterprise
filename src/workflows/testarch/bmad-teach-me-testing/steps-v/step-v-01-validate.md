@@ -261,3 +261,9 @@ Workflow is usable but could be improved.
 ✅ All validation checks run, comprehensive report generated, issues identified with remediation guidance, overall status determined.
 
 **Master Rule:** Check everything systematically, report findings clearly, provide actionable remediation.
+
+## On Complete
+
+Run: `python3 {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --key workflow.on_complete`
+
+If the resolved `workflow.on_complete` is non-empty, follow it as the final terminal instruction before exiting.
