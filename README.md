@@ -216,17 +216,28 @@ See `CONTRIBUTING.md` for guidelines.
 
 ## Publishing TEA to NPM
 
-TEA uses an automated release workflow that handles versioning, metadata sync, tagging, NPM publishing, and GitHub releases.
+TEA uses an automated publish workflow modeled after the main `BMAD-METHOD` repo. It supports:
+
+- `next` prereleases published automatically from `main`
+- manual stable releases on the `latest` dist-tag
+- trusted npm publishing (no `NPM_TOKEN` secret)
+- metadata sync for `package.json`, `package-lock.json`, and `.claude-plugin/marketplace.json`
 
 ### Prerequisites (One-Time Setup)
 
-1. **NPM Token Configuration:**
-   - Generate NPM automation token: [npmjs.com/settings/tokens](https://www.npmjs.com/settings/your-username/tokens)
-   - Add to GitHub Secrets: `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
-   - Name: `NPM_TOKEN`
-   - Value: [your token]
+1. **npm Trusted Publishing:**
+   - In npm package settings for `bmad-method-test-architecture-enterprise`, configure Trusted Publishers for this GitHub repository
+   - Allow publishes from the `bmad-code-org/bmad-method-test-architecture-enterprise` repo and the `.github/workflows/publish.yaml` workflow
+   - GitHub Actions must be able to request an OIDC token (`id-token: write`), which the workflow already does
 
-2. **Verify Package Configuration:**
+2. **GitHub App Secrets for Stable Releases:**
+   - Add `RELEASE_APP_ID`
+   - Add `RELEASE_APP_PRIVATE_KEY`
+   - Install the corresponding GitHub App on this repository with contents write access
+   - If `main` is protected, ensure the app is allowed to push the release commit and tag
+   - These are used only for manual stable releases so the workflow can push the version bump commit and tag back to `main`
+
+3. **Verify Package Configuration:**
    ```bash
    # Check package.json settings
    cat package.json | grep -A 3 "publishConfig"
@@ -242,71 +253,61 @@ TEA uses an automated release workflow that handles versioning, metadata sync, t
 
 #### Option 1: Using npm Scripts (Recommended)
 
-From your local terminal after merging to the release branch you want to publish, typically `main`:
+From your local terminal after merging to `main`:
 
 ```bash
-# Beta release (first release or testing)
-npm run release:beta
+# Publish the next prerelease from current main
+npm run release:next
 
-# Alpha release (early testing)
-npm run release:alpha
-
-# Patch release (bug fixes)
+# Publish a stable patch release
 npm run release:patch
 
-# Minor release (new features, backwards compatible)
+# Publish a stable minor release
 npm run release:minor
 
-# Major release (breaking changes)
+# Publish a stable major release
 npm run release:major
 ```
 
 #### Option 2: Manual Workflow Trigger
 
 1. Go to **Actions** tab in GitHub
-2. Click **"Manual Release"** workflow
+2. Click **"Publish"** workflow
 3. Click **"Run workflow"**
 4. Choose the branch to release, typically `main`
-5. Select version bump type (alpha, beta, patch, minor, major)
-6. Click **"Run workflow"**
+5. Select channel:
+   - `next` for a prerelease publish
+   - `latest` for a stable release
+6. If using `latest`, choose the bump type (`patch`, `minor`, `major`)
+7. Click **"Run workflow"**
 
 ### What Happens Automatically
 
 The workflow performs these steps:
 
 1. ✅ **Validation**: Runs the full `npm test` suite, including schema checks, install tests, knowledge checks, linting, markdown linting, formatting, and release metadata validation
-2. ✅ **Version Bump**: Updates `package.json`, `package-lock.json`, and `.claude-plugin/marketplace.json`
-   - `beta`: 1.12.3 → 1.12.4-beta.0
-   - `alpha`: 1.12.3 → 1.12.4-alpha.0
-   - `patch`: 1.12.3 → 1.12.4
-   - `minor`: 1.12.3 → 1.13.0
-   - `major`: 1.12.3 → 2.0.0
-3. ✅ **Commit**: Creates version bump commit
-4. ✅ **Tag**: Creates git tag (e.g., v1.12.4-beta.0)
-5. ✅ **Publish**: Publishes to NPM registry
-   - Alpha → dist-tag `alpha` (`npm install bmad-method-test-architecture-enterprise@alpha`)
-   - Beta → dist-tag `beta` (`npm install bmad-method-test-architecture-enterprise@beta`)
-   - Stable → dist-tag `latest` (`npm install bmad-method-test-architecture-enterprise`)
-6. ✅ **Push**: Pushes the version bump commit back to the selected branch when permitted, and always pushes the tag
-7. ✅ **GitHub Release**: Creates release with auto-generated notes
-8. ✅ **Summary**: Displays installation instructions and distribution links
+2. ✅ **Version Bump**:
+   - `next`: derives the next prerelease version and publishes it with dist-tag `next`
+   - `latest`: bumps the stable version (`patch`, `minor`, or `major`)
+3. ✅ **Metadata Sync**: Updates `.claude-plugin/marketplace.json` to match the package version before publishing
+4. ✅ **Publish**: Publishes to npm with provenance enabled
+   - `next` → `npm publish --tag next --provenance`
+   - `latest` → `npm publish --tag latest --provenance`
+5. ✅ **Stable Release Finalization**: For `latest`, creates a version bump commit, tags it, pushes it to `main`, and creates a GitHub Release
 
-### Version Bump Strategy
+### Channel Strategy
 
-**For TEA Module:**
-
-- **Beta (`1.12.x-beta.x`)**: Release candidate testing on the next patch line
-- **Alpha (`1.12.x-alpha.x`)**: Early development and experimental validation
-- **Patch (`1.12.x`)**: Bug fixes, no breaking changes
-- **Minor (`1.x.0`)**: New features, backwards compatible
-- **Major (`x.0.0`)**: Breaking changes
+- **`next`**: prerelease channel for the newest merged changes
+- **`latest`**: stable channel for intentional releases
+- **`patch`**: bug fixes, no breaking changes
+- **`minor`**: new features, backwards compatible
+- **`major`**: breaking changes
 
 **Recommended Release Path:**
 
-1. `1.12.3` → `1.12.4-beta.0` (first beta)
-2. Test beta with early adopters
-3. `1.12.4-beta.0` → `1.12.4-beta.1` (fixes)
-4. When stable: `1.12.4-beta.1` → `1.12.4`
+1. Merge releasable work to `main`
+2. Let `next` publish for early validation
+3. When ready, cut a stable `latest` release via `patch`, `minor`, or `major`
 
 ### Verify Publication
 
@@ -314,6 +315,7 @@ The workflow performs these steps:
 
 ```bash
 npm view bmad-method-test-architecture-enterprise
+npm view bmad-method-test-architecture-enterprise dist-tags
 ```
 
 **Install TEA:**
@@ -337,23 +339,30 @@ If you need to unpublish a version:
 
 ```bash
 # Unpublish specific version (within 72 hours)
-npm unpublish bmad-method-test-architecture-enterprise@1.12.4-beta.0
+npm unpublish bmad-method-test-architecture-enterprise@1.13.2-next.0
 
 # Deprecate version (preferred for older releases)
-npm deprecate bmad-method-test-architecture-enterprise@1.12.4-beta.0 "Use version X.Y.Z instead"
+npm deprecate bmad-method-test-architecture-enterprise@1.13.2-next.0 "Use version X.Y.Z instead"
 ```
 
 ### Troubleshooting
 
-**"NPM_TOKEN not found":**
+**Trusted publishing failed:**
 
-- Verify secret is set: GitHub repo → Settings → Secrets and variables → Actions
-- Secret name must be exactly: `NPM_TOKEN`
+- Verify npm Trusted Publishing is configured for this repository and workflow
+- Verify the workflow has `id-token: write`
+- Confirm the publish is running from the canonical repository, not a fork
 
 **"Package already exists":**
 
 - Check if package name is already taken on NPM
 - Update `name` in `package.json` if needed
+
+**"Version push failed":**
+
+- Verify `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY` are configured
+- Verify the GitHub App is installed on this repository with contents write access
+- If branch protection is enabled on `main`, verify the app is allowed to push the release commit and tag
 
 **"Tests failed":**
 
@@ -362,9 +371,9 @@ npm deprecate bmad-method-test-architecture-enterprise@1.12.4-beta.0 "Use versio
 
 **"Git push failed (protected branch)":**
 
-- This is expected for a protected release branch
-- The tag and version bump are still created
-- You may need to manually merge the version bump commit
+- This is not expected once the release GitHub App is configured correctly
+- Verify branch protection allows the app to push the release commit and tag
+- If needed, create the GitHub Release manually after resolving the app permissions
 
 ### Release Checklist
 
@@ -375,7 +384,8 @@ Before releasing:
 - [ ] CHANGELOG.md updated
 - [ ] No uncommitted changes
 - [ ] On `main` branch
-- [ ] NPM token configured in GitHub Secrets
+- [ ] npm Trusted Publishing configured
+- [ ] `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY` configured
 - [ ] Package name available on NPM
 
 After releasing:
