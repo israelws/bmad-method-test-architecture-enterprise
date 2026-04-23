@@ -39,7 +39,7 @@ Execute each entry in `{workflow.activation_steps_prepend}` in order before proc
 
 ### Step 3: Load Persistent Facts
 
-Treat every entry in `{workflow.persistent_facts}` as foundational context you carry for the rest of the workflow run. Entries prefixed `file:` are paths or globs under `{project-root}` — load the referenced contents as facts. All other entries are facts verbatim.
+Treat every entry in `{workflow.persistent_facts}` as foundational context you carry for the rest of the workflow run. Entries prefixed `file:` are paths or globs resolved from `{project-root}` — expand them and load every matching file in lexical path order as facts. All other entries are facts verbatim.
 
 ### Step 4: Load Config
 
@@ -62,7 +62,7 @@ Activation is complete. Begin the workflow below.
 
 This workflow uses **tri-modal step-file architecture**:
 
-- **Create mode (steps-c/)**: primary execution flow
+- **Create mode (steps-c/)**: primary execution flow for new runs and resume continuation
 - **Validate mode (steps-v/)**: validation against checklist
 - **Edit mode (steps-e/)**: revise existing outputs
 
@@ -72,15 +72,15 @@ This workflow uses **tri-modal step-file architecture**:
 
 "Welcome to the workflow. What would you like to do?"
 
-- **[C] Create** — Run the workflow
-- **[R] Resume** — Resume an interrupted workflow
+- **[C] Create** — Run the workflow from the beginning
+- **[R] Resume** — Resume an interrupted Create workflow
 - **[V] Validate** — Validate existing outputs
 - **[E] Edit** — Edit existing outputs
 
 ### 2. Route to First Step
 
 - **If C:** Load `{skill-root}/steps-c/step-01-detect-mode.md`
-- **If R:** Load `{skill-root}/steps-c/step-01b-resume.md`
+- **If R:** Load `{skill-root}/steps-c/step-01b-resume.md` (Create-mode continuation)
 - **If V:** Load `{skill-root}/steps-v/step-01-validate.md`
 - **If E:** Load `{skill-root}/steps-e/step-01-assess.md`
 

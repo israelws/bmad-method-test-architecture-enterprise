@@ -240,31 +240,19 @@ async function runTests() {
   // ============================================================
   console.log(`${colors.yellow}Test Suite 4: Workflow Structure${colors.reset}\n`);
 
-  const teachMeSkillPath = path.join(projectRoot, 'src/workflows/testarch/bmad-teach-me-testing/SKILL.md');
-  try {
-    if (await pathExists(teachMeSkillPath)) {
-      const teachMeContent = await fs.readFile(teachMeSkillPath, 'utf8');
-      assert(teachMeContent.length > 0, 'bmad-teach-me-testing/SKILL.md exists');
-      assert(!teachMeContent.includes('_bmad/bmm/'), 'bmad-teach-me-testing has no _bmad/bmm/ references');
-    } else {
-      assert(false, 'bmad-teach-me-testing workflow exists', 'src/workflows/testarch/bmad-teach-me-testing/SKILL.md not found');
-    }
-  } catch (error) {
-    assert(false, 'teach-me-testing workflow validates', error.message);
-  }
+  const workflowDirs = [
+    'bmad-teach-me-testing',
+    'bmad-testarch-framework',
+    'bmad-testarch-ci',
+    'bmad-testarch-test-design',
+    'bmad-testarch-atdd',
+    'bmad-testarch-automate',
+    'bmad-testarch-test-review',
+    'bmad-testarch-nfr',
+    'bmad-testarch-trace',
+  ];
 
-  const workflowDirs = {
-    'bmad-testarch-framework': 'framework',
-    'bmad-testarch-ci': 'ci',
-    'bmad-testarch-test-design': 'test-design',
-    'bmad-testarch-atdd': 'atdd',
-    'bmad-testarch-automate': 'automate',
-    'bmad-testarch-test-review': 'test-review',
-    'bmad-testarch-nfr': 'nfr-assess',
-    'bmad-testarch-trace': 'trace',
-  };
-
-  for (const [dirName, displayName] of Object.entries(workflowDirs)) {
+  for (const dirName of workflowDirs) {
     const skillMdPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/SKILL.md`);
     const customizeTomlPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/customize.toml`);
     const workflowYamlPath = path.join(projectRoot, `src/workflows/testarch/${dirName}/workflow.yaml`);
@@ -273,6 +261,7 @@ async function runTests() {
     if (await pathExists(skillMdPath)) {
       try {
         const skillContent = await fs.readFile(skillMdPath, 'utf8');
+        assert(skillContent && skillContent.trim().length > 0, `${dirName}/SKILL.md is not empty`);
         assert(skillContent.includes('## On Activation'), `${dirName}/SKILL.md has On Activation section`);
         assert(
           skillContent.includes('resolve_customization.py --skill {skill-root} --key workflow'),

@@ -41,7 +41,7 @@ Execute each entry in `{workflow.activation_steps_prepend}` in order before proc
 
 ### Step 3: Load Persistent Facts
 
-Treat every entry in `{workflow.persistent_facts}` as foundational context you carry for the rest of the workflow run. Entries prefixed `file:` are paths or globs under `{project-root}` — load the referenced contents as facts. All other entries are facts verbatim.
+Treat every entry in `{workflow.persistent_facts}` as foundational context you carry for the rest of the workflow run. Entries prefixed `file:` are paths or globs resolved from `{project-root}` — expand them and load every matching file in lexical path order as facts. All other entries are facts verbatim.
 
 ### Step 4: Load Config
 
@@ -101,7 +101,7 @@ This uses **step-file architecture** for disciplined execution:
 
 **Check if mode was specified in the command invocation:**
 
-- If user invoked with "create" or "teach" or "learn" or "start" → Set mode to **create**
+- If user invoked with "create" or "teach" or "learn" or "start" or "resume" or "continue" → Set mode to **create**
 - If user invoked with "validate" or "review" or "-v" or "--validate" → Set mode to **validate**
 - If user invoked with "edit" or "modify" or "-e" or "--edit" → Set mode to **edit**
 

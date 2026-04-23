@@ -7,7 +7,6 @@
 
 # --- Configurable below. Overrides merge per BMad structural rules: ---
 #   scalars: override wins • arrays (persistent_facts, activation_steps_*): append
-#   arrays-of-tables with `code`/`id`: replace matching items, append new ones.
 
 # Steps to run before the standard activation (config load, greet).
 # Overrides append. Use for pre-flight loads, compliance checks, etc.
@@ -28,7 +27,7 @@ activation_steps_append = []
 # Each entry is either:
 #   - a literal sentence, e.g. "Every test must run deterministically in CI."
 #   - a file reference prefixed with `file:`, e.g. "file:{project-root}/docs/test-standards.md"
-#     (glob patterns are supported; the file's contents are loaded and treated as facts).
+#     (glob patterns are supported; matching files load in lexical path order as facts).
 
 persistent_facts = [
   "file:{project-root}/**/project-context.md",
